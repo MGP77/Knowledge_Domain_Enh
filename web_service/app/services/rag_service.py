@@ -87,16 +87,17 @@ class GigaChatEmbeddingsProvider:
             try:
                 from langchain_gigachat import GigaChatEmbeddings
                 
-                # Инициализируем GigaChat эмбеддинги
+                # Инициализируем GigaChat эмбеддинги с корпоративным endpoint
                 self.embeddings = GigaChatEmbeddings(
                     model=model_name,
+                    base_url=config.GIGACHAT_BASE_URL,  # Используем корпоративный endpoint
                     ca_bundle_file=None,  # Используем системные CA
                     cert_file=self.cert_path,
                     key_file=self.key_path,
                     verify_ssl_certs=self.verify_ssl
                 )
                 
-                logger.info(f"✅ GigaChat эмбеддинги инициализированы (модель: {model_name})")
+                logger.info(f"✅ GigaChat эмбеддинги инициализированы (модель: {model_name}, endpoint: {config.GIGACHAT_BASE_URL})")
                 
             except ImportError as e:
                 logger.warning(f"langchain-gigachat не установлен: {e}")
