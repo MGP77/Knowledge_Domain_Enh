@@ -332,6 +332,9 @@ class RAGService:
         if not self.check_availability():
             return {
                 "total_documents": 0,
+                "total_chunks": 0,
+                "confluence_pages": 0,
+                "uploaded_files": 0,
                 "status": "unavailable",
                 "embedding_provider": "none"
             }
@@ -342,15 +345,30 @@ class RAGService:
             # Получаем дополнительную статистику
             all_metadata = self.collection.get(include=["metadatas"])
             
-            # Подсчитываем уникальные документы
+            # Подсчитываем уникальные документы по источникам
             unique_sources = set()
+            confluence_pages = set()
+            uploaded_files = set()
+            
             for metadata in all_metadata['metadatas']:
                 source = metadata.get('source', 'unknown')
+                
+                if source == 'confluence':
+                    # Для Confluence учитываем page_id
+                    page_id = metadata.get('page_id', 'unknown')
+                    confluence_pages.add(page_id)
+                elif source == 'file':
+                    # Для файлов учитываем filename
+                    filename = metadata.get('filename', 'unknown')
+                    uploaded_files.add(filename)
+                
                 unique_sources.add(source)
             
             return {
                 "total_chunks": count,
                 "unique_documents": len(unique_sources),
+                "confluence_pages": len(confluence_pages),
+                "uploaded_files": len(uploaded_files),
                 "status": "available",
                 "embedding_provider": type(self.embedding_provider).__name__,
                 "embedding_model": getattr(self.embedding_provider, 'model_name', 'GigaChat')
@@ -360,6 +378,9 @@ class RAGService:
             logger.error(f"Ошибка получения статистики: {e}")
             return {
                 "total_documents": 0,
+                "total_chunks": 0,
+                "confluence_pages": 0,
+                "uploaded_files": 0,
                 "status": "error",
                 "error": str(e),
                 "embedding_provider": "error"

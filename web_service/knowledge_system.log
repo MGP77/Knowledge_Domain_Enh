@@ -1,0 +1,30 @@
+2025-09-11 00:31:02,584 - app.services.gigachat_service - WARNING - ⚠️ Обнаружен файл-заглушка ключа
+2025-09-11 00:31:02,629 - app.services.rag_service - WARNING - ⚠️ GigaChat эмбеддинги недоступны - используем fallback провайдер
+2025-09-11 00:31:02,630 - app.services.rag_service - INFO - 🔧 Используем простые эмбеддинги (fallback)
+2025-09-11 00:31:02,630 - app.services.rag_service - INFO - ✅ RAG сервис успешно инициализирован
+2025-09-11 00:31:02,630 - app.services.rag_service - INFO - 📊 Документов в базе: 0
+2025-09-11 00:31:02,630 - app.services.rag_service - INFO - 🔧 Провайдер эмбеддингов: SimpleEmbeddingsProvider
+2025-09-11 00:31:02,631 - app.services.confluence_service - INFO - ✅ Найдены системные сертификаты: /etc/ssl/certs/ca-certificates.crt
+/home/parallels/Projects/Knowledge_Domain_Enh/web_service/main.py:80: DeprecationWarning: 
+        on_event is deprecated, use lifespan event handlers instead.
+
+        Read more about it in the
+        [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+        
+  @app.on_event("startup")
+2025-09-11 00:31:02,645 - app.services.gigachat_service - WARNING - ⚠️ Обнаружен файл-заглушка ключа
+2025-09-11 00:31:02,648 - app.services.rag_service - WARNING - ⚠️ GigaChat эмбеддинги недоступны - используем fallback провайдер
+2025-09-11 00:31:02,648 - app.services.rag_service - INFO - 🔧 Используем простые эмбеддинги (fallback)
+2025-09-11 00:31:02,648 - app.services.rag_service - INFO - ✅ RAG сервис успешно инициализирован
+2025-09-11 00:31:02,649 - app.services.rag_service - INFO - 📊 Документов в базе: 0
+2025-09-11 00:31:02,649 - app.services.rag_service - INFO - 🔧 Провайдер эмбеддингов: SimpleEmbeddingsProvider
+2025-09-11 00:31:02,649 - app.services.confluence_service - INFO - ✅ Найдены системные сертификаты: /etc/ssl/certs/ca-certificates.crt
+INFO:     Started server process [16501]
+INFO:     Waiting for application startup.
+2025-09-11 00:31:02,652 - main - INFO - 🚀 Запуск web-сервиса...
+2025-09-11 00:31:02,652 - main - INFO - 📊 GigaChat доступен: False
+2025-09-11 00:31:02,652 - main - INFO - 📊 RAG сервис доступен: True
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8005 (Press CTRL+C to quit)
+INFO:     127.0.0.1:44504 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39970 - "GET /api/admin/stats HTTP/1.1" 200 OK

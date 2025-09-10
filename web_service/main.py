@@ -320,8 +320,8 @@ async def get_admin_stats():
         return AdminStats(
             total_documents=rag_stats.get('unique_documents', 0),
             total_chunks=rag_stats.get('total_chunks', 0),
-            confluence_pages=0,  # TODO: подсчет Confluence страниц
-            uploaded_files=0,    # TODO: подсчет загруженных файлов
+            confluence_pages=rag_stats.get('confluence_pages', 0),
+            uploaded_files=rag_stats.get('uploaded_files', 0),
             last_update=datetime.now()
         )
         
