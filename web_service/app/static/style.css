@@ -1,0 +1,59 @@
+/* Дополнительные стили для web-сервиса */
+
+.highlight {
+    background: linear-gradient(120deg, #a8edea 0%, #fed6e3 100%);
+    padding: 2px 4px;
+    border-radius: 3px;
+}
+
+.markdown-content h1,
+.markdown-content h2,
+.markdown-content h3 {
+    color: #2c3e50;
+    margin: 20px 0 10px 0;
+}
+
+.markdown-content h1 {
+    border-bottom: 2px solid #3498db;
+    padding-bottom: 10px;
+}
+
+.markdown-content h2 {
+    border-left: 4px solid #3498db;
+    padding-left: 15px;
+}
+
+.markdown-content code {
+    background: #f8f9fa;
+    padding: 2px 6px;
+    border-radius: 4px;
+    border: 1px solid #e9ecef;
+    font-family: 'Monaco', 'Consolas', monospace;
+}
+
+.markdown-content pre {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+    overflow-x: auto;
+}
+
+.markdown-content ul,
+.markdown-content ol {
+    margin: 10px 0;
+    padding-left: 30px;
+}
+
+.markdown-content li {
+    margin: 5px 0;
+}
+
+.fade-in {
+    animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}

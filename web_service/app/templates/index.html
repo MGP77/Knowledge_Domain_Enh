@@ -1,0 +1,399 @@
+{% extends "base.html" %}
+
+{% block title %}Чат с GigaChat - {{ app_name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .chat-container {
+        display: flex;
+        flex-direction: column;
+        height: 600px;
+        border: 2px solid #ddd;
+        border-radius: 15px;
+        overflow: hidden;
+        background: #f8f9fa;
+    }
+
+    .chat-header {
+        background: #3498db;
+        color: white;
+        padding: 15px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .chat-status {
+        display: flex;
+        align-items: center;
+        font-size: 14px;
+    }
+
+    .chat-messages {
+        flex: 1;
+        overflow-y: auto;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .message {
+        padding: 15px;
+        border-radius: 15px;
+        max-width: 80%;
+        word-wrap: break-word;
+    }
+
+    .message-user {
+        background: #3498db;
+        color: white;
+        align-self: flex-end;
+        border-bottom-right-radius: 5px;
+    }
+
+    .message-bot {
+        background: white;
+        color: #333;
+        align-self: flex-start;
+        border: 1px solid #ddd;
+        border-bottom-left-radius: 5px;
+    }
+
+    .message-sources {
+        margin-top: 10px;
+        padding: 10px;
+        background: #f8f9fa;
+        border-radius: 10px;
+        border-left: 4px solid #3498db;
+    }
+
+    .source-item {
+        background: white;
+        padding: 8px;
+        margin: 5px 0;
+        border-radius: 5px;
+        font-size: 12px;
+        border-left: 3px solid #27ae60;
+    }
+
+    .chat-input-container {
+        padding: 20px;
+        background: white;
+        border-top: 1px solid #ddd;
+    }
+
+    .chat-input-form {
+        display: flex;
+        gap: 10px;
+        align-items: flex-end;
+    }
+
+    .chat-input {
+        flex: 1;
+        min-height: 44px;
+        resize: vertical;
+        max-height: 120px;
+    }
+
+    .chat-options {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        margin-bottom: 10px;
+        padding: 10px;
+        background: #f8f9fa;
+        border-radius: 10px;
+    }
+
+    .checkbox-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .system-info {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+
+    .info-card {
+        background: white;
+        padding: 20px;
+        border-radius: 15px;
+        border-left: 4px solid #3498db;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .info-card h3 {
+        margin-bottom: 10px;
+        color: #2c3e50;
+    }
+
+    .typing-indicator {
+        display: none;
+        padding: 15px;
+        background: white;
+        border-radius: 15px;
+        align-self: flex-start;
+        border: 1px solid #ddd;
+        border-bottom-left-radius: 5px;
+    }
+
+    .typing-dots {
+        display: flex;
+        gap: 4px;
+    }
+
+    .typing-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #3498db;
+        animation: typing 1.5s infinite;
+    }
+
+    .typing-dot:nth-child(2) {
+        animation-delay: 0.2s;
+    }
+
+    .typing-dot:nth-child(3) {
+        animation-delay: 0.4s;
+    }
+
+    @keyframes typing {
+        0%, 80%, 100% {
+            opacity: 0.3;
+        }
+        40% {
+            opacity: 1;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="system-info">
+    <div class="info-card">
+        <h3>🤖 Статус GigaChat</h3>
+        <div class="chat-status">
+            <span class="status-indicator {% if gigachat_available %}status-online{% else %}status-offline{% endif %}"></span>
+            {% if gigachat_available %}
+                Подключен и готов к работе
+            {% else %}
+                Недоступен (проверьте сертификаты)
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="info-card">
+        <h3>📚 Статус RAG базы</h3>
+        <div class="chat-status">
+            <span class="status-indicator {% if rag_available %}status-online{% else %}status-offline{% endif %}"></span>
+            {% if rag_available %}
+                База знаний доступна
+            {% else %}
+                Недоступна (проверьте GigaChat эмбеддинги)
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% if not gigachat_available %}
+<div class="alert alert-warning">
+    ⚠️ GigaChat недоступен. Убедитесь, что сертификаты находятся в папке certificates/ и корректно настроены.
+</div>
+{% endif %}
+
+{% if not rag_available %}
+<div class="alert alert-warning">
+    ⚠️ RAG база недоступна. Убедитесь, что GigaChat эмбеддинги настроены корректно и сертификаты установлены.
+</div>
+{% endif %}
+
+<div class="chat-container">
+    <div class="chat-header">
+        <h3>💬 Чат с GigaChat</h3>
+        <div class="chat-status">
+            <span class="status-indicator {% if gigachat_available %}status-online{% else %}status-offline{% endif %}"></span>
+            {% if gigachat_available %}Онлайн{% else %}Офлайн{% endif %}
+        </div>
+    </div>
+
+    <div class="chat-messages" id="chatMessages">
+        <div class="message message-bot">
+            Привет! Я помощник на базе GigaChat. 
+            {% if rag_available %}
+            Могу отвечать на вопросы, используя базу знаний или без неё.
+            {% else %}
+            Пока что база знаний недоступна, но я могу отвечать на общие вопросы.
+            {% endif %}
+            Задавайте любые вопросы!
+        </div>
+    </div>
+
+    <div class="typing-indicator" id="typingIndicator">
+        <div class="typing-dots">
+            <div class="typing-dot"></div>
+            <div class="typing-dot"></div>
+            <div class="typing-dot"></div>
+        </div>
+        <span style="margin-left: 10px;">GigaChat печатает...</span>
+    </div>
+
+    <div class="chat-input-container">
+        <div class="chat-options">
+            <div class="checkbox-wrapper">
+                <input type="checkbox" id="useRag" checked {% if not rag_available %}disabled{% endif %}>
+                <label for="useRag">Использовать базу знаний</label>
+            </div>
+            {% if not rag_available %}
+            <small style="color: #666;">База знаний недоступна</small>
+            {% endif %}
+        </div>
+
+        <form class="chat-input-form" id="chatForm">
+            <textarea 
+                class="form-control chat-input" 
+                id="messageInput" 
+                placeholder="Введите ваш вопрос..." 
+                rows="1"
+                {% if not gigachat_available %}disabled{% endif %}
+            ></textarea>
+            <button 
+                type="submit" 
+                class="btn btn-primary"
+                id="sendButton"
+                {% if not gigachat_available %}disabled{% endif %}
+            >
+                Отправить
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const chatForm = document.getElementById('chatForm');
+    const messageInput = document.getElementById('messageInput');
+    const chatMessages = document.getElementById('chatMessages');
+    const typingIndicator = document.getElementById('typingIndicator');
+    const useRagCheckbox = document.getElementById('useRag');
+    const sendButton = document.getElementById('sendButton');
+
+    // Автоматическое изменение размера textarea
+    messageInput.addEventListener('input', function() {
+        this.style.height = 'auto';
+        this.style.height = this.scrollHeight + 'px';
+    });
+
+    // Отправка по Enter (Shift+Enter для новой строки)
+    messageInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            chatForm.dispatchEvent(new Event('submit'));
+        }
+    });
+
+    // Обработка отправки сообщения
+    chatForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const message = messageInput.value.trim();
+        if (!message) return;
+
+        // Добавляем сообщение пользователя
+        addMessage(message, 'user');
+        messageInput.value = '';
+        messageInput.style.height = 'auto';
+
+        // Показываем индикатор печати
+        showTyping(true);
+        sendButton.disabled = true;
+
+        try {
+            const response = await fetch('/api/chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    message: message,
+                    use_rag: useRagCheckbox.checked
+                })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                addMessage(data.response, 'bot', data.sources);
+            } else {
+                addMessage(`Ошибка: ${data.detail}`, 'bot');
+            }
+        } catch (error) {
+            addMessage(`Ошибка сети: ${error.message}`, 'bot');
+        } finally {
+            showTyping(false);
+            sendButton.disabled = false;
+            messageInput.focus();
+        }
+    });
+
+    function addMessage(content, sender, sources = []) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message message-${sender}`;
+        
+        // Обрабатываем markdown в сообщениях бота
+        if (sender === 'bot') {
+            messageDiv.innerHTML = formatMarkdown(content);
+        } else {
+            messageDiv.textContent = content;
+        }
+
+        chatMessages.appendChild(messageDiv);
+
+        // Добавляем источники если есть
+        if (sources && sources.length > 0) {
+            const sourcesDiv = document.createElement('div');
+            sourcesDiv.className = 'message-sources';
+            sourcesDiv.innerHTML = '<strong>📚 Источники:</strong>';
+            
+            sources.forEach(source => {
+                const sourceDiv = document.createElement('div');
+                sourceDiv.className = 'source-item';
+                sourceDiv.innerHTML = `
+                    <div><strong>${source.metadata.title || 'Документ'}</strong></div>
+                    <div>${source.text}</div>
+                    <div style="color: #666; font-size: 11px;">Релевантность: ${(source.score * 100).toFixed(1)}%</div>
+                `;
+                sourcesDiv.appendChild(sourceDiv);
+            });
+            
+            chatMessages.appendChild(sourcesDiv);
+        }
+
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    function showTyping(show) {
+        typingIndicator.style.display = show ? 'flex' : 'none';
+        if (show) {
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+    }
+
+    function formatMarkdown(text) {
+        // Простая обработка markdown
+        return text
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+            .replace(/\*(.*?)\*/g, '<em>$1</em>')
+            .replace(/`(.*?)`/g, '<code>$1</code>')
+            .replace(/\n/g, '<br>');
+    }
+});
+</script>
+{% endblock %}
