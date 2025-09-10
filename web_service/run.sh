@@ -58,6 +58,31 @@ check_pip() {
     echo -e "${GREEN}✅ pip найден${NC}"
 }
 
+# Проверка SQLite версии для ChromaDB
+check_sqlite() {
+    echo -e "${BLUE}🔍 Проверка SQLite для ChromaDB...${NC}"
+    
+    SQLITE_VERSION=$($PYTHON_CMD -c "import sqlite3; print(sqlite3.sqlite_version)" 2>/dev/null || echo "unknown")
+    echo -e "${CYAN}📊 Текущая версия SQLite: $SQLITE_VERSION${NC}"
+    
+    # Проверяем версию SQLite (требуется >= 3.35.0)
+    REQUIRED_VERSION="3.35.0"
+    if $PYTHON_CMD -c "
+import sqlite3
+import sys
+current = tuple(map(int, sqlite3.sqlite_version.split('.')))
+required = tuple(map(int, '$REQUIRED_VERSION'.split('.')))
+sys.exit(0 if current >= required else 1)
+" 2>/dev/null; then
+        echo -e "${GREEN}✅ SQLite версия поддерживается ChromaDB${NC}"
+        return 0
+    else
+        echo -e "${YELLOW}⚠️ SQLite версия $SQLITE_VERSION < $REQUIRED_VERSION${NC}"
+        echo -e "${YELLOW}📦 Будет установлена обновленная версия SQLite в виртуальном окружении${NC}"
+        return 1
+    fi
+}
+
 # Установка зависимостей
 install_dependencies() {
     echo -e "${BLUE}📦 Установка зависимостей...${NC}"
@@ -67,7 +92,41 @@ install_dependencies() {
         exit 1
     fi
     
-    echo -e "${YELLOW}📋 Устанавливаем пакеты из $REQUIREMENTS_FILE...${NC}"
+    # Проверяем SQLite перед установкой ChromaDB
+    if ! check_sqlite; then
+        echo -e "${YELLOW}� Установка обновленного SQLite...${NC}"
+        
+        # Устанавливаем pysqlite3-binary для замены системного SQLite
+        pip install pysqlite3-binary
+        
+        # Создаем патч для ChromaDB чтобы использовать pysqlite3
+        echo -e "${YELLOW}🔧 Настройка ChromaDB для использования обновленного SQLite...${NC}"
+        
+        # Создаем __init__.py файл для патча SQLite
+        mkdir -p ./sqlite_patch
+        cat > ./sqlite_patch/__init__.py << 'EOF'
+"""
+Патч для замены sqlite3 на pysqlite3-binary в ChromaDB
+Используется в корпоративных средах с устаревшими версиями SQLite
+"""
+# Заменяем системный sqlite3 на pysqlite3-binary
+import sys
+try:
+    import pysqlite3 as sqlite3
+    sys.modules['sqlite3'] = sqlite3
+    print("✅ Используется обновленный SQLite через pysqlite3-binary")
+except ImportError:
+    import sqlite3
+    print("⚠️ Используется системный SQLite")
+EOF
+        
+        # Применяем патч перед импортом ChromaDB
+        export PYTHONPATH="./sqlite_patch:$PYTHONPATH"
+        
+        echo -e "${GREEN}✅ SQLite патч применен${NC}"
+    fi
+    
+    echo -e "${YELLOW}�📋 Устанавливаем пакеты из $REQUIREMENTS_FILE...${NC}"
     
     # Установка с обработкой ошибок
     if pip install -r "$REQUIREMENTS_FILE"; then
@@ -77,7 +136,15 @@ install_dependencies() {
         
         # Попытка установки без строгих версий
         pip install --upgrade pip
-        pip install fastapi uvicorn jinja2 python-multipart requests chromadb pypdf2 python-docx beautifulsoup4 typing-extensions pydantic aiofiles python-dotenv websockets
+        
+        # Устанавливаем pysqlite3-binary перед ChromaDB
+        pip install pysqlite3-binary
+        
+        # Основные пакеты
+        pip install fastapi uvicorn jinja2 python-multipart requests pypdf2 python-docx beautifulsoup4 typing-extensions pydantic aiofiles python-dotenv websockets
+        
+        # ChromaDB с поддержкой обновленного SQLite
+        pip install chromadb
         
         # Попытка установки GigaChat (может не сработать в корпоративной среде)
         pip install langchain-gigachat || echo -e "${YELLOW}⚠️ GigaChat не установлен - будет работать в ограниченном режиме${NC}"

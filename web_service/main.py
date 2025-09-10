@@ -6,6 +6,31 @@ Copyright (c) 2025. All rights reserved.
 Author: M.P.
 """
 
+# ВАЖНО: Патч SQLite должен быть применен ДО любых импортов ChromaDB
+# Это решает проблему с устаревшими версиями SQLite в корпоративных средах
+import sys
+try:
+    import sqlite3
+    current_version = tuple(map(int, sqlite3.sqlite_version.split('.')))
+    required_version = (3, 35, 0)
+    
+    if current_version < required_version:
+        print(f"⚠️ Обнаружена устаревшая версия SQLite: {sqlite3.sqlite_version}")
+        print(f"🔧 Попытка использования обновленной версии через pysqlite3-binary...")
+        
+        try:
+            import pysqlite3 as sqlite3
+            sys.modules['sqlite3'] = sqlite3
+            print(f"✅ Используется обновленный SQLite: {sqlite3.sqlite_version}")
+        except ImportError:
+            print("❌ pysqlite3-binary не установлен. Используйте: pip install pysqlite3-binary")
+            print("⚠️ Продолжаем с системным SQLite - возможны ошибки ChromaDB")
+    else:
+        print(f"✅ SQLite версия {sqlite3.sqlite_version} поддерживается")
+        
+except Exception as e:
+    print(f"⚠️ Ошибка проверки SQLite: {e}")
+
 import os
 import json
 import logging
