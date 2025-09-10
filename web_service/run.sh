@@ -24,7 +24,7 @@ APP_PORT=8005
 APP_HOST="0.0.0.0"
 PID_FILE="knowledge_system.pid"
 LOG_FILE="knowledge_system.log"
-REQUIREMENTS_FILE="requirements-corporate-flexible.txt"
+REQUIREMENTS_FILE="requirements.txt"
 PYTHON_CMD="python"
 
 # Проверка Python
