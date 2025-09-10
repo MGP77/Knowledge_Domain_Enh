@@ -8,8 +8,8 @@ Author: M.P.
 
 import os
 import logging
+import mimetypes
 from typing import Optional, Dict, Any
-import magic
 from pathlib import Path
 
 # Импорты для обработки различных типов файлов
@@ -24,6 +24,13 @@ try:
     DOCX_AVAILABLE = True
 except ImportError:
     DOCX_AVAILABLE = False
+
+# Проверяем доступность python-magic (может отсутствовать в корпоративной среде)
+try:
+    import magic
+    MAGIC_AVAILABLE = True
+except ImportError:
+    MAGIC_AVAILABLE = False
 
 from config import config
 
@@ -42,7 +49,7 @@ class FileProcessorService:
     
     def get_file_type(self, file_path: str) -> str:
         """
-        Определение типа файла
+        Определение типа файла (корпоративная версия без libmagic)
         
         Args:
             file_path: Путь к файлу
@@ -51,19 +58,49 @@ class FileProcessorService:
             Тип файла
         """
         try:
-            # Используем python-magic для определения типа
-            file_type = magic.from_file(file_path, mime=True)
-            return file_type
-        except Exception:
-            # Fallback - по расширению
+            # Приоритет 1: python-magic (если доступен И libmagic установлен)
+            if MAGIC_AVAILABLE:
+                try:
+                    file_type = magic.from_file(file_path, mime=True)
+                    return file_type
+                except Exception as magic_error:
+                    # libmagic системная библиотека может отсутствовать
+                    logger.warning(f"⚠️ python-magic установлен, но libmagic недоступен: {magic_error}")
+                    logger.info("🔄 Переключаемся на встроенный mimetypes")
+            
+            # Приоритет 2: встроенный модуль mimetypes
+            mime_type, _ = mimetypes.guess_type(file_path)
+            if mime_type:
+                logger.debug(f"📋 Тип файла определён через mimetypes: {mime_type}")
+                return mime_type
+                
+            # Приоритет 3: по расширению файла
             extension = Path(file_path).suffix.lower()
             mime_types = {
                 '.pdf': 'application/pdf',
                 '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
                 '.doc': 'application/msword',
-                '.txt': 'text/plain'
+                '.txt': 'text/plain',
+                '.md': 'text/markdown',
+                '.html': 'text/html',
+                '.htm': 'text/html'
             }
-            return mime_types.get(extension, 'application/octet-stream')
+            detected_type = mime_types.get(extension, 'application/octet-stream')
+            logger.debug(f"📁 Тип файла определён по расширению: {detected_type}")
+            return detected_type
+            
+        except Exception as e:
+            logger.warning(f"❌ Ошибка определения типа файла {file_path}: {e}")
+            # Окончательный fallback - по расширению
+            extension = Path(file_path).suffix.lower()
+            if extension == '.pdf':
+                return 'application/pdf'
+            elif extension in ['.docx', '.doc']:
+                return 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+            elif extension in ['.txt', '.md']:
+                return 'text/plain'
+            else:
+                return 'application/octet-stream'
     
     def validate_file(self, file_path: str) -> Dict[str, Any]:
         """
