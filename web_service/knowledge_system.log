@@ -1,0 +1,40 @@
+2025-09-10 20:49:07,826 - app.services.gigachat_service - WARNING - ⚠️ Обнаружен файл-заглушка ключа
+2025-09-10 20:49:07,879 - app.services.rag_service - ERROR - ❌ GigaChat эмбеддинги недоступны - проверьте сертификаты
+2025-09-10 20:49:07,879 - app.services.rag_service - WARNING - ⚠️ Ни один провайдер эмбеддингов недоступен
+2025-09-10 20:49:07,879 - app.services.confluence_service - INFO - ✅ Найдены системные сертификаты: /etc/ssl/certs/ca-certificates.crt
+/home/parallels/Projects/Knowledge_Domain_Enh/web_service/main.py:80: DeprecationWarning: 
+        on_event is deprecated, use lifespan event handlers instead.
+
+        Read more about it in the
+        [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+        
+  @app.on_event("startup")
+2025-09-10 20:49:07,902 - app.services.gigachat_service - WARNING - ⚠️ Обнаружен файл-заглушка ключа
+2025-09-10 20:49:07,906 - app.services.rag_service - ERROR - ❌ GigaChat эмбеддинги недоступны - проверьте сертификаты
+2025-09-10 20:49:07,906 - app.services.rag_service - WARNING - ⚠️ Ни один провайдер эмбеддингов недоступен
+2025-09-10 20:49:07,906 - app.services.confluence_service - INFO - ✅ Найдены системные сертификаты: /etc/ssl/certs/ca-certificates.crt
+INFO:     Started server process [113495]
+INFO:     Waiting for application startup.
+2025-09-10 20:49:07,909 - main - INFO - 🚀 Запуск web-сервиса...
+2025-09-10 20:49:07,909 - main - INFO - 📊 GigaChat доступен: False
+2025-09-10 20:49:07,909 - main - INFO - 📊 RAG сервис доступен: False
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8005 (Press CTRL+C to quit)
+INFO:     127.0.0.1:42532 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50496 - "GET /api/admin/models HTTP/1.1" 200 OK
+2025-09-10 20:49:47,516 - main - ERROR - Ошибка установки модели: 503: GigaChat сервис недоступен
+INFO:     127.0.0.1:50580 - "POST /api/admin/models/set HTTP/1.1" 500 Internal Server Error
+INFO:     127.0.0.1:59788 - "GET /admin?id=62d2f92a-4edb-4301-970e-5ef4cc0fe124&vscodeBrowserReqId=1757494203369 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53276 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53276 - "GET /admin HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53276 - "GET /api/admin/models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56776 - "WebSocket /ws/logs" [accepted]
+2025-09-10 20:50:42,952 - main - INFO - 🔌 Новое WebSocket соединение для логов
+INFO:     connection open
+INFO:     127.0.0.1:56672 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40946 - "GET /api/admin/stats HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     connection closed
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [113495]

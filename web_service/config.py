@@ -35,7 +35,15 @@ class Config:
     MTLS_VERIFY_SSL = os.getenv("MTLS_VERIFY_SSL", "false").lower() == "true"
     
     # Модели GigaChat
-    DEFAULT_GIGACHAT_MODEL = "GigaChat-2"
+    GIGACHAT_MODELS = {
+        "по_умолчанию": "GigaChat-2-Pro",
+        "доступные": [
+            "GigaChat-2",
+            "GigaChat-2-Pro", 
+            "GigaChat-2-Max"
+        ]
+    }
+    DEFAULT_GIGACHAT_MODEL = os.getenv("GIGACHAT_MODEL", GIGACHAT_MODELS["по_умолчанию"])
     FALLBACK_MODEL = "GigaChat"
     
     # GigaChat Embeddings
@@ -52,6 +60,8 @@ class Config:
     
     # Confluence настройки
     CONFLUENCE_TIMEOUT = int(os.getenv("CONFLUENCE_TIMEOUT", 30))
+    CONFLUENCE_SSL_VERIFY = os.getenv("CONFLUENCE_SSL_VERIFY", "true").lower() == "true"
+    CONFLUENCE_CA_BUNDLE = os.getenv("CONFLUENCE_CA_BUNDLE", None)
     
     # Загрузка файлов
     UPLOAD_FOLDER = os.getenv("UPLOAD_FOLDER", "./storage/uploads")

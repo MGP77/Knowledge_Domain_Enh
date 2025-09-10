@@ -168,6 +168,37 @@
         font-size: 13px;
     }
 
+    .form-check {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        padding: 15px;
+        background: #f8f9fa;
+        border-radius: 8px;
+        border: 1px solid #e9ecef;
+    }
+
+    .form-check-input {
+        width: 18px;
+        height: 18px;
+        margin-top: 2px;
+        cursor: pointer;
+    }
+
+    .form-check-label {
+        cursor: pointer;
+        font-weight: 500;
+        color: #495057;
+        line-height: 1.4;
+    }
+
+    .form-check .form-text {
+        margin-top: 5px;
+        margin-left: 0;
+        display: block;
+        color: #6c757d;
+    }
+
     .tab-content {
         display: none;
     }
@@ -195,6 +226,251 @@
         background: #3498db;
         color: white;
     }
+
+    /* Стили для консоли */
+    .console-container {
+        background: #1e1e1e;
+        border-radius: 10px;
+        padding: 0;
+        margin-top: 20px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        overflow: hidden;
+    }
+
+    .console-header {
+        background: #323232;
+        padding: 15px 20px;
+        border-bottom: 1px solid #444;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .console-title {
+        color: #fff;
+        font-weight: bold;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .console-controls {
+        display: flex;
+        gap: 10px;
+    }
+
+    .console-btn {
+        padding: 5px 10px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 12px;
+        transition: all 0.3s;
+    }
+
+    .console-btn.clear {
+        background: #e74c3c;
+        color: white;
+    }
+
+    .console-btn.pause {
+        background: #f39c12;
+        color: white;
+    }
+
+    .console-btn.resume {
+        background: #27ae60;
+        color: white;
+    }
+
+    .console-output {
+        max-height: 500px;
+        overflow-y: auto;
+        padding: 15px;
+        font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+        font-size: 13px;
+        line-height: 1.4;
+        background: #1e1e1e;
+        color: #d4d4d4;
+    }
+
+    .log-entry {
+        margin-bottom: 8px;
+        padding: 5px 8px;
+        border-radius: 4px;
+        border-left: 3px solid transparent;
+        word-wrap: break-word;
+    }
+
+    .log-entry.INFO {
+        border-left-color: #3498db;
+        background: rgba(52, 152, 219, 0.1);
+    }
+
+    .log-entry.WARNING {
+        border-left-color: #f39c12;
+        background: rgba(243, 156, 18, 0.1);
+        color: #f39c12;
+    }
+
+    .log-entry.ERROR {
+        border-left-color: #e74c3c;
+        background: rgba(231, 76, 60, 0.1);
+        color: #e74c3c;
+    }
+
+    .log-entry.DEBUG {
+        border-left-color: #9b59b6;
+        background: rgba(155, 89, 182, 0.1);
+        color: #9b59b6;
+    }
+
+    .log-timestamp {
+        color: #7f8c8d;
+        font-size: 11px;
+        margin-right: 10px;
+    }
+
+    .log-logger {
+        color: #95a5a6;
+        font-size: 11px;
+        margin-right: 10px;
+    }
+
+    .log-message {
+        color: inherit;
+    }
+
+    .console-status {
+        padding: 10px 20px;
+        background: #2c3e50;
+        color: #ecf0f1;
+        font-size: 12px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .status-indicator {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .status-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+    }
+
+    .status-dot.connected {
+        background: #27ae60;
+        box-shadow: 0 0 5px #27ae60;
+    }
+
+    .status-dot.disconnected {
+        background: #e74c3c;
+        box-shadow: 0 0 5px #e74c3c;
+    }
+
+    .auto-scroll-toggle {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 12px;
+    }
+
+    .auto-scroll-toggle input[type="checkbox"] {
+        width: 14px;
+        height: 14px;
+    }
+
+    /* Стили для моделей */
+    .model-grid {
+        display: grid;
+        gap: 15px;
+        margin-top: 15px;
+    }
+
+    .model-card {
+        border: 2px solid #ddd;
+        border-radius: 10px;
+        padding: 15px;
+        cursor: pointer;
+        transition: all 0.3s;
+        background: white;
+    }
+
+    .model-card:hover {
+        border-color: #3498db;
+        box-shadow: 0 2px 10px rgba(52, 152, 219, 0.2);
+    }
+
+    .model-card.active {
+        border-color: #27ae60;
+        background: #f0fff4;
+        box-shadow: 0 2px 10px rgba(39, 174, 96, 0.2);
+    }
+
+    .model-card.disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
+    .model-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+
+    .model-name {
+        font-weight: bold;
+        color: #2c3e50;
+    }
+
+    .model-badge {
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: bold;
+        text-transform: uppercase;
+    }
+
+    .model-badge.default {
+        background: #3498db;
+        color: white;
+    }
+
+    .model-badge.active {
+        background: #27ae60;
+        color: white;
+    }
+
+    .model-description {
+        color: #666;
+        font-size: 14px;
+        margin-bottom: 15px;
+        padding: 10px;
+        background: #f8f9fa;
+        border-radius: 5px;
+        border-left: 3px solid #3498db;
+    }
+
+    .model-description h5 {
+        margin: 0 0 8px 0;
+        color: #2c3e50;
+    }
+
+    .model-description p {
+        margin: 0;
+        line-height: 1.4;
+    }
+
+    .model-info {
+        display: grid;
+        gap: 15px;
+    }
 </style>
 {% endblock %}
 
@@ -221,7 +497,9 @@
 <div class="tab-buttons">
     <button class="tab-button active" onclick="switchTab('confluence')">🌐 Confluence</button>
     <button class="tab-button" onclick="switchTab('files')">📁 Файлы</button>
+    <button class="tab-button" onclick="switchTab('models')">🤖 Модели</button>
     <button class="tab-button" onclick="switchTab('database')">🗄️ База данных</button>
+    <button class="tab-button" onclick="switchTab('console')">🖥️ Консоль</button>
 </div>
 
 <div id="confluenceTab" class="tab-content active">
@@ -253,6 +531,21 @@
                         <label class="form-label">Максимум страниц</label>
                         <input type="number" class="form-control" id="maxPages" 
                                value="50" min="1" max="1000">
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="verifySSL" checked>
+                            <label class="form-check-label" for="verifySSL">
+                                🔒 Проверять SSL сертификаты
+                            </label>
+                            <small class="form-text text-muted">Отключите для корпоративных сред с самоподписанными сертификатами</small>
+                        </div>
+                    </div>
+                    <div>
+                        <!-- Пустая колонка для выравнивания -->
                     </div>
                 </div>
             </div>
@@ -335,6 +628,51 @@ https://company.atlassian.net/wiki/pages/viewpage.action?pageId=789012"></textar
     </div>
 </div>
 
+<div id="modelsTab" class="tab-content">
+    <div class="admin-card">
+        <h3>🤖 Управление моделями GigaChat</h3>
+        
+        <div class="form-section">
+            <h4>Текущая модель</h4>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-number" id="currentModel">Загрузка...</div>
+                    <div class="stat-label">Активная модель</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" id="modelStatus">🔄</div>
+                    <div class="stat-label">Статус</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h4>Выбор модели</h4>
+            <div id="modelsContainer">
+                <p>Загрузка списка моделей...</p>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h4>Информация о моделях</h4>
+            <div class="model-info">
+                <div class="model-description">
+                    <h5>🔵 GigaChat-2</h5>
+                    <p>Базовая модель для повседневных задач. Быстрая и эффективная для простых запросов и общения.</p>
+                </div>
+                <div class="model-description">
+                    <h5>⭐ GigaChat-2-Pro</h5>
+                    <p>Усовершенствованная модель для сложных задач и аналитики. Рекомендуется для большинства корпоративных задач.</p>
+                </div>
+                <div class="model-description">
+                    <h5>🚀 GigaChat-2-Max</h5>
+                    <p>Максимально мощная модель для самых сложных запросов. Лучшая производительность для комплексного анализа.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div id="databaseTab" class="tab-content">
     <div class="admin-card">
         <h3>🗄️ Управление базой данных</h3>
@@ -367,32 +705,62 @@ https://company.atlassian.net/wiki/pages/viewpage.action?pageId=789012"></textar
         </div>
     </div>
 </div>
+
+<div id="consoleTab" class="tab-content">
+    <div class="admin-card">
+        <h3>🖥️ Консоль логов</h3>
+        
+        <div class="console-container">
+            <div class="console-header">
+                <div class="console-title">
+                    📋 Логи приложения в реальном времени
+                </div>
+                <div class="console-controls">
+                    <button class="console-btn pause" id="pauseBtn" onclick="togglePause()">⏸️ Пауза</button>
+                    <button class="console-btn clear" onclick="clearConsole()">🗑️ Очистить</button>
+                </div>
+            </div>
+            <div class="console-output" id="consoleOutput">
+                <div class="log-entry INFO">
+                    <span class="log-timestamp">--:--:--.---</span>
+                    <span class="log-logger">[system]</span>
+                    <span class="log-message">🔌 Подключение к WebSocket логам...</span>
+                </div>
+            </div>
+            <div class="console-status">
+                <div class="status-indicator">
+                    <div class="status-dot disconnected" id="statusDot"></div>
+                    <span id="statusText">Подключение...</span>
+                </div>
+                <div class="auto-scroll-toggle">
+                    <input type="checkbox" id="autoScroll" checked>
+                    <label for="autoScroll">Автопрокрутка</label>
+                </div>
+            </div>
+        </div>
+        
+        <div class="form-section">
+            <h4>ℹ️ Информация</h4>
+            <p>Эта консоль показывает логи приложения в реальном времени. Вы увидите:</p>
+            <ul>
+                <li>🔵 <strong>INFO</strong> - информационные сообщения</li>
+                <li>🟡 <strong>WARNING</strong> - предупреждения</li>
+                <li>🔴 <strong>ERROR</strong> - ошибки</li>
+                <li>🟣 <strong>DEBUG</strong> - отладочная информация</li>
+            </ul>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-// Переключение вкладок
-function switchTab(tabName) {
-    // Скрываем все вкладки
-    document.querySelectorAll('.tab-content').forEach(tab => {
-        tab.classList.remove('active');
-    });
-    
-    // Убираем активность с кнопок
-    document.querySelectorAll('.tab-button').forEach(btn => {
-        btn.classList.remove('active');
-    });
-    
-    // Показываем нужную вкладку
-    document.getElementById(tabName + 'Tab').classList.add('active');
-    event.target.classList.add('active');
-}
-
 // Тест подключения к Confluence
 async function testConfluenceConnection() {
     const url = document.getElementById('confluenceUrl').value;
     const username = document.getElementById('confluenceUsername').value;
     const password = document.getElementById('confluencePassword').value;
+    const verifySSL = document.getElementById('verifySSL').checked;
 
     if (!url || !username || !password) {
         showAlert('Заполните все поля подключения', 'error');
@@ -402,7 +770,7 @@ async function testConfluenceConnection() {
     const resultDiv = document.getElementById('confluenceResult');
     resultDiv.style.display = 'block';
     resultDiv.className = 'confluence-test-result alert alert-warning';
-    resultDiv.innerHTML = '🔄 Тестирование подключения...';
+    resultDiv.innerHTML = `🔄 Тестирование подключения... ${!verifySSL ? '(SSL проверка отключена)' : ''}`;
 
     try {
         const response = await fetch('/api/confluence/test', {
@@ -413,7 +781,8 @@ async function testConfluenceConnection() {
             body: JSON.stringify({
                 url: url,
                 username: username,
-                password: password
+                password: password,
+                verify_ssl: verifySSL
             })
         });
 
@@ -448,7 +817,8 @@ document.getElementById('confluenceForm').addEventListener('submit', async funct
                       document.getElementById('pageUrls').value.split('\n')
                           .map(url => url.trim())
                           .filter(url => url.length > 0) : null,
-            parse_levels: parseInt(document.getElementById('parseLevels').value)
+            parse_levels: parseInt(document.getElementById('parseLevels').value),
+            verify_ssl: document.getElementById('verifySSL').checked
         },
         max_pages: parseInt(document.getElementById('maxPages').value),
         include_attachments: false,
@@ -612,7 +982,293 @@ async function clearDatabase() {
     }
 }
 
+// =============================================================================
+// УПРАВЛЕНИЕ МОДЕЛЯМИ
+// =============================================================================
+
+// Загрузка списка моделей
+async function loadModels() {
+    try {
+        const response = await fetch('/api/admin/models');
+        const data = await response.json();
+        
+        // Обновляем статус
+        const currentModelEl = document.getElementById('currentModel');
+        const statusEl = document.getElementById('modelStatus');
+        
+        if (data.available) {
+            currentModelEl.textContent = data.current_model;
+            statusEl.textContent = '✅';
+            statusEl.style.color = '#27ae60';
+        } else {
+            currentModelEl.textContent = 'Недоступно';
+            statusEl.textContent = '❌';
+            statusEl.style.color = '#e74c3c';
+        }
+        
+        // Отображаем модели
+        renderModels(data.models, data.current_model, data.available);
+        
+    } catch (error) {
+        console.error('Ошибка загрузки моделей:', error);
+        document.getElementById('modelsContainer').innerHTML = 
+            '<p style="color: #e74c3c;">❌ Ошибка загрузки списка моделей</p>';
+    }
+}
+
+// Отображение моделей
+function renderModels(models, currentModel, available) {
+    const container = document.getElementById('modelsContainer');
+    
+    if (!available) {
+        container.innerHTML = '<p style="color: #e74c3c;">❌ GigaChat сервис недоступен</p>';
+        return;
+    }
+    
+    if (!models || models.length === 0) {
+        container.innerHTML = '<p>📝 Модели не найдены</p>';
+        return;
+    }
+    
+    const modelsHtml = models.map(model => `
+        <div class="model-card ${model.name === currentModel ? 'active' : ''} ${!available ? 'disabled' : ''}" 
+             onclick="${available ? `selectModel('${model.name}')` : ''}">
+            <div class="model-header">
+                <span class="model-name">${model.display_name}</span>
+                <div class="badges">
+                    ${model.is_default ? '<span class="model-badge default">По умолчанию</span>' : ''}
+                    ${model.name === currentModel ? '<span class="model-badge active">Активна</span>' : ''}
+                </div>
+            </div>
+            <div style="color: #666; font-size: 14px;">
+                ${model.description}
+            </div>
+        </div>
+    `).join('');
+    
+    container.innerHTML = `<div class="model-grid">${modelsHtml}</div>`;
+}
+
+// Выбор модели
+async function selectModel(modelName) {
+    try {
+        const formData = new FormData();
+        formData.append('model_name', modelName);
+        
+        const response = await fetch('/api/admin/models/set', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            showAlert(`✅ Модель ${modelName} установлена`, 'success');
+            // Перезагружаем список моделей
+            loadModels();
+        } else {
+            showAlert(`❌ ${result.message}`, 'error');
+        }
+        
+    } catch (error) {
+        showAlert(`❌ Ошибка установки модели: ${error.message}`, 'error');
+    }
+}
+
 // Автообновление статистики каждые 30 секунд
 setInterval(refreshStats, 30000);
+
+// =============================================================================
+// КОНСОЛЬ ЛОГОВ
+// =============================================================================
+
+let consoleWebSocket = null;
+let consolePaused = false;
+let maxLogEntries = 1000; // Максимальное количество записей в консоли
+
+// Подключение к WebSocket логов
+function connectConsoleWebSocket() {
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${protocol}//${window.location.host}/ws/logs`;
+    
+    try {
+        consoleWebSocket = new WebSocket(wsUrl);
+        
+        consoleWebSocket.onopen = function(event) {
+            updateConsoleStatus(true, 'Подключено');
+            addLogEntry({
+                timestamp: new Date().toLocaleTimeString() + '.' + new Date().getMilliseconds().toString().padStart(3, '0'),
+                level: 'INFO',
+                logger: 'websocket',
+                message: '✅ WebSocket соединение установлено'
+            });
+        };
+        
+        consoleWebSocket.onmessage = function(event) {
+            if (!consolePaused) {
+                try {
+                    const logData = JSON.parse(event.data);
+                    addLogEntry(logData);
+                } catch (e) {
+                    console.error('Ошибка парсинга лог сообщения:', e);
+                }
+            }
+        };
+        
+        consoleWebSocket.onclose = function(event) {
+            updateConsoleStatus(false, 'Отключено');
+            addLogEntry({
+                timestamp: new Date().toLocaleTimeString() + '.' + new Date().getMilliseconds().toString().padStart(3, '0'),
+                level: 'WARNING',
+                logger: 'websocket',
+                message: '🔌 WebSocket соединение закрыто. Переподключение через 5 сек...'
+            });
+            
+            // Автоматическое переподключение через 5 секунд
+            setTimeout(connectConsoleWebSocket, 5000);
+        };
+        
+        consoleWebSocket.onerror = function(error) {
+            updateConsoleStatus(false, 'Ошибка');
+            addLogEntry({
+                timestamp: new Date().toLocaleTimeString() + '.' + new Date().getMilliseconds().toString().padStart(3, '0'),
+                level: 'ERROR',
+                logger: 'websocket',
+                message: '❌ Ошибка WebSocket соединения'
+            });
+        };
+        
+    } catch (error) {
+        updateConsoleStatus(false, 'Ошибка подключения');
+        console.error('Ошибка создания WebSocket:', error);
+    }
+}
+
+// Добавление записи в консоль
+function addLogEntry(logData) {
+    const consoleOutput = document.getElementById('consoleOutput');
+    if (!consoleOutput) return;
+    
+    const logEntry = document.createElement('div');
+    logEntry.className = `log-entry ${logData.level}`;
+    
+    logEntry.innerHTML = `
+        <span class="log-timestamp">${logData.timestamp}</span>
+        <span class="log-logger">[${logData.logger || 'system'}]</span>
+        <span class="log-message">${escapeHtml(logData.message)}</span>
+    `;
+    
+    consoleOutput.appendChild(logEntry);
+    
+    // Ограничиваем количество записей
+    while (consoleOutput.children.length > maxLogEntries) {
+        consoleOutput.removeChild(consoleOutput.firstChild);
+    }
+    
+    // Автопрокрутка
+    if (document.getElementById('autoScroll').checked) {
+        consoleOutput.scrollTop = consoleOutput.scrollHeight;
+    }
+}
+
+// Обновление статуса подключения
+function updateConsoleStatus(connected, statusText) {
+    const statusDot = document.getElementById('statusDot');
+    const statusTextEl = document.getElementById('statusText');
+    
+    if (statusDot) {
+        statusDot.className = `status-dot ${connected ? 'connected' : 'disconnected'}`;
+    }
+    
+    if (statusTextEl) {
+        statusTextEl.textContent = statusText;
+    }
+}
+
+// Переключение паузы
+function togglePause() {
+    consolePaused = !consolePaused;
+    const pauseBtn = document.getElementById('pauseBtn');
+    
+    if (consolePaused) {
+        pauseBtn.innerHTML = '▶️ Возобновить';
+        pauseBtn.className = 'console-btn resume';
+        addLogEntry({
+            timestamp: new Date().toLocaleTimeString() + '.' + new Date().getMilliseconds().toString().padStart(3, '0'),
+            level: 'INFO',
+            logger: 'console',
+            message: '⏸️ Консоль поставлена на паузу'
+        });
+    } else {
+        pauseBtn.innerHTML = '⏸️ Пауза';
+        pauseBtn.className = 'console-btn pause';
+        addLogEntry({
+            timestamp: new Date().toLocaleTimeString() + '.' + new Date().getMilliseconds().toString().padStart(3, '0'),
+            level: 'INFO',
+            logger: 'console',
+            message: '▶️ Консоль возобновлена'
+        });
+    }
+}
+
+// Очистка консоли
+function clearConsole() {
+    const consoleOutput = document.getElementById('consoleOutput');
+    if (consoleOutput) {
+        consoleOutput.innerHTML = '';
+        addLogEntry({
+            timestamp: new Date().toLocaleTimeString() + '.' + new Date().getMilliseconds().toString().padStart(3, '0'),
+            level: 'INFO',
+            logger: 'console',
+            message: '🗑️ Консоль очищена'
+        });
+    }
+}
+
+// Экранирование HTML
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Обновленная функция переключения вкладок с поддержкой консоли и моделей
+function switchTab(tabName) {
+    // Скрываем все вкладки
+    document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.classList.remove('active');
+    });
+    
+    // Убираем активность с кнопок
+    document.querySelectorAll('.tab-button').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    
+    // Показываем нужную вкладку
+    document.getElementById(tabName + 'Tab').classList.add('active');
+    event.target.classList.add('active');
+    
+    // Специальные действия для разных вкладок
+    if (tabName === 'console' && !consoleWebSocket) {
+        connectConsoleWebSocket();
+    } else if (tabName === 'models') {
+        loadModels();
+    }
+}
+
+// Инициализация при загрузке страницы
+document.addEventListener('DOMContentLoaded', function() {
+    // Если консольная вкладка активна при загрузке, подключаемся к WebSocket
+    const consoleTab = document.getElementById('consoleTab');
+    if (consoleTab && consoleTab.classList.contains('active')) {
+        connectConsoleWebSocket();
+    }
+    
+    // Если вкладка моделей активна при загрузке, загружаем модели
+    const modelsTab = document.getElementById('modelsTab');
+    if (modelsTab && modelsTab.classList.contains('active')) {
+        loadModels();
+    }
+});
 </script>
 {% endblock %}

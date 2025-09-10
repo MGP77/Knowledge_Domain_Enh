@@ -9,10 +9,15 @@ Author: M.P.
 import logging
 import requests
 from requests.auth import HTTPBasicAuth
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 from bs4 import BeautifulSoup
 from typing import List, Dict, Any, Optional
 import time
 import urllib.parse
+import os
+import ssl
+import urllib3
 
 from ..models.schemas import ConfluenceConfig
 from config import config
@@ -24,7 +29,82 @@ class ConfluenceService:
     
     def __init__(self):
         self.session = requests.Session()
-        self.session.timeout = config.CONFLUENCE_TIMEOUT
+        self.timeout = config.CONFLUENCE_TIMEOUT
+        
+        # Настройка для корпоративной среды
+        self._setup_corporate_environment()
+    
+    def _setup_corporate_environment(self):
+        """Настройка для работы в корпоративной среде"""
+        try:
+            # Проверяем переменные окружения для SSL
+            ssl_verify = os.getenv('CONFLUENCE_SSL_VERIFY', 'true').lower()
+            ca_bundle = os.getenv('CONFLUENCE_CA_BUNDLE', None)
+            
+            if ssl_verify == 'false':
+                # Отключаем проверку SSL для корпоративных сред
+                self.session.verify = False
+                # Отключаем предупреждения urllib3
+                urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+                logger.warning("⚠️ SSL проверка отключена для корпоративной среды")
+            elif ca_bundle and os.path.exists(ca_bundle):
+                # Используем корпоративные сертификаты
+                self.session.verify = ca_bundle
+                logger.info(f"✅ Используются корпоративные сертификаты: {ca_bundle}")
+            else:
+                # Пытаемся найти системные сертификаты
+                possible_ca_paths = [
+                    '/etc/ssl/certs/ca-certificates.crt',  # Ubuntu/Debian
+                    '/etc/ssl/certs/ca-bundle.crt',        # CentOS/RHEL
+                    '/etc/pki/tls/certs/ca-bundle.crt',    # RHEL/Fedora
+                    '/System/Library/OpenSSL/certs/cert.pem'  # macOS
+                ]
+                
+                for ca_path in possible_ca_paths:
+                    if os.path.exists(ca_path):
+                        self.session.verify = ca_path
+                        logger.info(f"✅ Найдены системные сертификаты: {ca_path}")
+                        break
+                else:
+                    # Если ничего не найдено, отключаем SSL для корпоративной среды
+                    logger.warning("⚠️ Сертификаты не найдены, отключаем SSL проверку")
+                    self.session.verify = False
+                    urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+            
+            # Настройка retry стратегии для корпоративных сетей
+            retry_strategy = Retry(
+                total=3,
+                backoff_factor=1,
+                status_forcelist=[429, 500, 502, 503, 504],
+            )
+            adapter = HTTPAdapter(max_retries=retry_strategy)
+            self.session.mount("http://", adapter)
+            self.session.mount("https://", adapter)
+            
+            # Настройка headers для корпоративных прокси
+            self.session.headers.update({
+                'User-Agent': 'Knowledge-Domain-Enhancement/1.0',
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            })
+            
+        except Exception as e:
+            logger.error(f"❌ Ошибка настройки корпоративной среды: {e}")
+            # Fallback - отключаем SSL проверку
+            self.session.verify = False
+            urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+            logger.warning("⚠️ Используется fallback конфигурация с отключенным SSL")
+    
+    def _configure_ssl_for_request(self, confluence_config: ConfluenceConfig):
+        """Настройка SSL для конкретного запроса на основе конфигурации"""
+        if hasattr(confluence_config, 'verify_ssl') and not confluence_config.verify_ssl:
+            # Пользователь явно отключил SSL проверку через UI
+            self.session.verify = False
+            urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+            logger.warning("⚠️ SSL проверка отключена пользователем")
+        elif not hasattr(confluence_config, 'verify_ssl'):
+            # Для обратной совместимости - если поле отсутствует, используем настройки по умолчанию
+            pass
     
     def _clean_html_content(self, html_content: str) -> str:
         """Очистка HTML контента и извлечение текста"""
@@ -60,6 +140,9 @@ class ConfluenceService:
             Dict с результатом тестирования
         """
         try:
+            # Настраиваем SSL для этого запроса
+            self._configure_ssl_for_request(confluence_config)
+            
             # Подготавливаем URL для тестирования
             base_url = str(confluence_config.url).rstrip('/')
             test_url = f"{base_url}/rest/api/content"
@@ -71,7 +154,8 @@ class ConfluenceService:
             response = self.session.get(
                 test_url,
                 auth=auth,
-                params={'limit': 1}
+                params={'limit': 1},
+                timeout=self.timeout
             )
             
             if response.status_code == 200:
@@ -161,7 +245,7 @@ class ConfluenceService:
                 'status': 'current'
             }
             
-            response = self.session.get(url, params=params)
+            response = self.session.get(url, params=params, timeout=self.timeout)
             
             if response.status_code == 200:
                 data = response.json()
@@ -208,7 +292,7 @@ class ConfluenceService:
                         'expand': 'version'
                     }
                     
-                    response = self.session.get(url, auth=auth, params=params)
+                    response = self.session.get(url, auth=auth, params=params, timeout=self.timeout)
                     
                     if response.status_code == 200:
                         data = response.json()
@@ -264,7 +348,7 @@ class ConfluenceService:
                     'expand': 'version,space'
                 }
                 
-                response = self.session.get(url, auth=auth, params=params)
+                response = self.session.get(url, auth=auth, params=params, timeout=self.timeout)
                 
                 if response.status_code != 200:
                     logger.error(f"Ошибка получения страниц: {response.status_code}")
@@ -313,7 +397,7 @@ class ConfluenceService:
                 'expand': 'body.storage,version,space,ancestors'
             }
             
-            response = self.session.get(url, auth=auth, params=params)
+            response = self.session.get(url, auth=auth, params=params, timeout=self.timeout)
             
             if response.status_code != 200:
                 logger.error(f"Ошибка получения страницы {page_id}: {response.status_code}")
@@ -370,6 +454,9 @@ class ConfluenceService:
         all_page_ids = set()
         
         try:
+            # Настраиваем SSL для этого запроса
+            self._configure_ssl_for_request(confluence_config)
+            
             # 1. Обработка прямых URL страниц
             if confluence_config.page_urls:
                 logger.info(f"Обработка прямых URL: {len(confluence_config.page_urls)} ссылок")

@@ -30,6 +30,7 @@ class ConfluenceConfig(BaseModel):
     page_ids: Optional[List[str]] = None
     page_urls: Optional[List[str]] = None  # Прямые ссылки на страницы
     parse_levels: int = 1  # Количество уровней для парсинга (1-5)
+    verify_ssl: bool = True  # Проверять SSL сертификаты
 
 class ConfluenceParseRequest(BaseModel):
     """Запрос на парсинг Confluence"""

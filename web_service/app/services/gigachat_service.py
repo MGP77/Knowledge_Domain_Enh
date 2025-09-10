@@ -152,20 +152,50 @@ class GigaChatService:
         """
         return await self.chat_with_context(message, "")
     
-    def get_available_models(self) -> List[Dict[str, Any]]:
+    def get_available_models(self) -> List[Dict[str, str]]:
         """Получение списка доступных моделей"""
-        return [
-            {
-                "name": "GigaChat-2",
-                "display_name": "GigaChat 2 Lite",
-                "description": "Быстрая и легкая модель для простых задач"
-            },
-            {
-                "name": "GigaChat-2-Pro", 
-                "display_name": "GigaChat 2 Pro",
-                "description": "Усовершенствованная модель для сложных задач"
+        if not self.check_availability():
+            return []
+        
+        models_info = []
+        for model in config.GIGACHAT_MODELS["доступные"]:
+            model_info = {
+                "name": model,
+                "display_name": self._get_model_display_name(model),
+                "description": self._get_model_description(model),
+                "is_default": model == config.GIGACHAT_MODELS["по_умолчанию"]
             }
-        ]
+            models_info.append(model_info)
+        
+        return models_info
+    
+    def _get_model_display_name(self, model_name: str) -> str:
+        """Получение отображаемого имени модели"""
+        display_names = {
+            "GigaChat-2": "GigaChat 2",
+            "GigaChat-2-Pro": "GigaChat 2 Pro", 
+            "GigaChat-2-Max": "GigaChat 2 Max"
+        }
+        return display_names.get(model_name, model_name)
+    
+    def _get_model_description(self, model_name: str) -> str:
+        """Получение описания модели"""
+        descriptions = {
+            "GigaChat-2": "Базовая модель для повседневных задач",
+            "GigaChat-2-Pro": "Усовершенствованная модель для сложных задач и аналитики",
+            "GigaChat-2-Max": "Максимально мощная модель для самых сложных запросов"
+        }
+        return descriptions.get(model_name, "Модель GigaChat")
+    
+    def set_model(self, model_name: str) -> bool:
+        """Установка активной модели"""
+        if model_name not in config.GIGACHAT_MODELS["доступные"]:
+            logger.warning(f"❌ Неизвестная модель: {model_name}")
+            return False
+        
+        config.DEFAULT_GIGACHAT_MODEL = model_name
+        logger.info(f"✅ Установлена модель: {model_name}")
+        return True
     
     def get_current_model(self) -> str:
         """Получение текущей модели"""

@@ -7,9 +7,10 @@ Author: M.P.
 """
 
 import os
+import json
 import logging
 from datetime import datetime
-from fastapi import FastAPI, HTTPException, UploadFile, File, Form, Request
+from fastapi import FastAPI, HTTPException, UploadFile, File, Form, Request, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -21,6 +22,9 @@ from app.services.gigachat_service import GigaChatService
 from app.services.rag_service import RAGService
 from app.services.confluence_service import ConfluenceService
 from app.services.file_service import FileProcessorService
+
+# Импорты утилит
+from app.utils.websocket_logger import setup_websocket_logging, get_websocket_handler
 
 # Импорты моделей
 from app.models.schemas import (
@@ -76,6 +80,9 @@ async def add_security_headers(request: Request, call_next):
 @app.on_event("startup")
 async def startup_event():
     """События при запуске приложения"""
+    # Настройка WebSocket логирования
+    setup_websocket_logging()
+    
     logger.info("🚀 Запуск web-сервиса...")
     logger.info(f"📊 GigaChat доступен: {gigachat_service.check_availability()}")
     logger.info(f"📊 RAG сервис доступен: {rag_service.check_availability()}")
@@ -233,16 +240,30 @@ async def parse_confluence(request: ConfluenceParseRequest):
 async def upload_file(file: UploadFile = File(...)):
     """Загрузка и обработка файла"""
     try:
-        if not rag_service.check_availability():
-            raise HTTPException(
-                status_code=503,
-                detail="RAG сервис недоступен"
-            )
-        
         logger.info(f"📁 Загружен файл: {file.filename}")
+        
+        # Проверяем доступность RAG сервиса
+        if not rag_service.check_availability():
+            logger.warning("⚠️ RAG сервис недоступен - файл будет обработан, но не добавлен в базу")
+            return DocumentUploadResponse(
+                filename=file.filename,
+                size=0,
+                status="warning",
+                message="RAG сервис недоступен. Проверьте настройки GigaChat и сертификаты. Файл не может быть добавлен в базу знаний.",
+                processed_chunks=0
+            )
         
         # Читаем содержимое файла
         file_content = await file.read()
+        
+        # Проверяем размер файла
+        if len(file_content) == 0:
+            return DocumentUploadResponse(
+                filename=file.filename,
+                size=0,
+                status="error",
+                message="Файл пустой или не может быть прочитан"
+            )
         
         # Сохраняем файл
         file_path = file_service.save_uploaded_file(file_content, file.filename)
@@ -255,7 +276,7 @@ async def upload_file(file: UploadFile = File(...)):
                 filename=file.filename,
                 size=len(file_content),
                 status="error",
-                message=processing_result['error']
+                message=f"Ошибка обработки файла: {processing_result['error']}"
             )
         
         # Добавляем в RAG базу
@@ -278,12 +299,17 @@ async def upload_file(file: UploadFile = File(...)):
                 filename=file.filename,
                 size=len(file_content),
                 status="error",
-                message="Ошибка добавления в базу знаний"
+                message="Ошибка добавления в базу знаний. Проверьте настройки GigaChat."
             )
         
     except Exception as e:
-        logger.error(f"Ошибка загрузки файла: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"❌ Ошибка загрузки файла {file.filename}: {e}")
+        return DocumentUploadResponse(
+            filename=file.filename if file.filename else "unknown",
+            size=0,
+            status="error",
+            message=f"Критическая ошибка: {str(e)}"
+        )
 
 @app.get("/api/admin/stats", response_model=AdminStats)
 async def get_admin_stats():
@@ -301,6 +327,51 @@ async def get_admin_stats():
         
     except Exception as e:
         logger.error(f"Ошибка получения статистики: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/admin/models")
+async def get_available_models():
+    """Получение списка доступных моделей GigaChat"""
+    try:
+        models = gigachat_service.get_available_models()
+        current_model = gigachat_service.get_current_model()
+        
+        return {
+            "models": models,
+            "current_model": current_model,
+            "available": gigachat_service.check_availability()
+        }
+        
+    except Exception as e:
+        logger.error(f"Ошибка получения списка моделей: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/admin/models/set")
+async def set_model(model_name: str = Form(...)):
+    """Установка активной модели GigaChat"""
+    try:
+        if not gigachat_service.check_availability():
+            raise HTTPException(
+                status_code=503,
+                detail="GigaChat сервис недоступен"
+            )
+        
+        success = gigachat_service.set_model(model_name)
+        
+        if success:
+            return {
+                "success": True,
+                "message": f"Модель {model_name} установлена",
+                "current_model": gigachat_service.get_current_model()
+            }
+        else:
+            return {
+                "success": False,
+                "message": f"Ошибка установки модели {model_name}"
+            }
+            
+    except Exception as e:
+        logger.error(f"Ошибка установки модели: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.delete("/api/admin/clear-db")
@@ -323,6 +394,51 @@ async def clear_database():
     except Exception as e:
         logger.error(f"Ошибка очистки базы данных: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.websocket("/ws/logs")
+async def websocket_logs(websocket: WebSocket):
+    """WebSocket endpoint для получения логов в реальном времени"""
+    await websocket.accept()
+    
+    # Получаем WebSocket обработчик
+    ws_handler = get_websocket_handler()
+    
+    # Добавляем соединение
+    ws_handler.add_connection(websocket)
+    
+    try:
+        logger.info("🔌 Новое WebSocket соединение для логов")
+        
+        # Отправляем приветственное сообщение
+        welcome_msg = {
+            "timestamp": datetime.now().strftime("%H:%M:%S.%f")[:-3],
+            "level": "INFO",
+            "logger": "websocket",
+            "message": "🔌 WebSocket соединение установлено. Ожидание логов...",
+            "module": "",
+            "funcName": "",
+            "lineno": 0
+        }
+        await websocket.send_text(json.dumps(welcome_msg))
+        
+        # Держим соединение открытым
+        while True:
+            try:
+                # Ожидаем сообщения от клиента (пинг)
+                await websocket.receive_text()
+            except WebSocketDisconnect:
+                break
+            except Exception as e:
+                logger.error(f"Ошибка в WebSocket: {e}")
+                break
+                
+    except WebSocketDisconnect:
+        logger.info("🔌 WebSocket соединение закрыто")
+    except Exception as e:
+        logger.error(f"Ошибка WebSocket логов: {e}")
+    finally:
+        # Удаляем соединение
+        ws_handler.remove_connection(websocket)
 
 @app.get("/api/health")
 async def health_check():
