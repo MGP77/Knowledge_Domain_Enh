@@ -246,8 +246,8 @@ class RAGService:
             self.is_available = False
     
     def _initialize_embedding_provider(self):
-        """Инициализация провайдера эмбеддингов"""
-        # Сначала пробуем GigaChat эмбеддинги
+        """Инициализация провайдера эмбеддингов - только GigaChat для корпоративной среды"""
+        # В корпоративной среде используем только GigaChat эмбеддинги
         gigachat_provider = GigaChatEmbeddingsProvider(
             model_name=getattr(config, 'GIGACHAT_EMBEDDING_MODEL', 'EmbeddingsGigaR')
         )
@@ -256,10 +256,10 @@ class RAGService:
             self.embedding_provider = gigachat_provider
             logger.info("🔧 Используем GigaChat эмбеддинги")
         else:
-            # Fallback на простой провайдер для тестирования
-            logger.warning("⚠️ GigaChat эмбеддинги недоступны - используем fallback провайдер")
-            self.embedding_provider = SimpleEmbeddingsProvider()
-            logger.info("🔧 Используем простые эмбеддинги (fallback)")
+            # В корпоративной среде fallback не используется
+            logger.error("❌ GigaChat эмбеддинги недоступны - проверьте сертификаты и подключение")
+            self.embedding_provider = None
+            raise RuntimeError("GigaChat эмбеддинги недоступны в корпоративной среде")
     
     def check_availability(self) -> bool:
         """Проверка доступности RAG сервиса"""

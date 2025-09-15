@@ -50,6 +50,8 @@ class GigaChatService:
                     logger.warning("⚠️ Обнаружен файл-заглушка ключа")
                     return
             
+            # Инициализируем клиент - теперь это просто флаг что все готово
+            self.client = True  # Флаг что клиент инициализирован
             self.is_available = True
             logger.info("✅ GigaChat клиент успешно инициализирован")
             logger.info(f"🔗 Базовый URL: {self.base_url}")
@@ -57,6 +59,7 @@ class GigaChatService:
         except Exception as e:
             logger.error(f"❌ Ошибка инициализации GigaChat: {e}")
             self.is_available = False
+            self.client = None
     
     def check_availability(self) -> bool:
         """Проверка доступности GigaChat"""
@@ -207,8 +210,12 @@ class GigaChatService:
     def test_embeddings(self, text: str) -> Dict[str, Any]:
         """Тестирование embedding провайдера"""
         try:
+            # Проверяем инициализацию клиента
             if not self.client:
                 return {"success": False, "error": "Клиент не инициализирован"}
+            
+            if not self.is_available:
+                return {"success": False, "error": "GigaChat сервис недоступен"}
             
             # Тестовый запрос к embedding API
             data = {
@@ -220,6 +227,9 @@ class GigaChatService:
             
             # Выполняем запрос с подробным логированием
             try:
+                logger.info(f"🔄 Отправляем тестовый запрос к {url}")
+                logger.info(f"📝 Данные: model={data['model']}, text_length={len(text)}")
+                
                 response = requests.post(
                     url,
                     json=data,
@@ -232,17 +242,22 @@ class GigaChatService:
                     }
                 )
                 
+                logger.info(f"📡 Получен ответ: status={response.status_code}")
+                
                 if response.status_code == 200:
                     response_data = response.json()
                     if "data" in response_data and len(response_data["data"]) > 0:
                         embedding = response_data["data"][0]["embedding"]
+                        logger.info(f"✅ Embedding получен успешно, размерность: {len(embedding)}")
                         return {
                             "success": True,
                             "embedding": embedding,
                             "model": config.GIGACHAT_EMBEDDING_MODEL,
-                            "status_code": response.status_code
+                            "status_code": response.status_code,
+                            "dimension": len(embedding)
                         }
                     else:
+                        logger.error(f"❌ Некорректный формат ответа: {response_data}")
                         return {
                             "success": False,
                             "error": f"Некорректный формат ответа: {response_data}",
@@ -250,6 +265,7 @@ class GigaChatService:
                         }
                 else:
                     error_text = response.text
+                    logger.error(f"❌ HTTP ошибка {response.status_code}: {error_text}")
                     return {
                         "success": False,
                         "error": f"HTTP {response.status_code}: {error_text}",
@@ -257,21 +273,25 @@ class GigaChatService:
                     }
                     
             except requests.exceptions.SSLError as e:
+                logger.error(f"❌ SSL ошибка: {e}")
                 return {
                     "success": False,
                     "error": f"SSL ошибка: {str(e)}"
                 }
             except requests.exceptions.ConnectionError as e:
+                logger.error(f"❌ Ошибка соединения: {e}")
                 return {
                     "success": False,
                     "error": f"Ошибка соединения: {str(e)}"
                 }
             except requests.exceptions.Timeout as e:
+                logger.error(f"❌ Тайм-аут запроса: {e}")
                 return {
                     "success": False,
                     "error": f"Тайм-аут запроса: {str(e)}"
                 }
             except Exception as e:
+                logger.error(f"❌ Неожиданная ошибка запроса: {e}")
                 return {
                     "success": False,
                     "error": f"Неожиданная ошибка запроса: {str(e)}"
