@@ -156,6 +156,14 @@ async def admin_panel(request: Request):
         "stats": stats.dict()
     })
 
+@app.get("/manual", response_class=HTMLResponse)
+async def manual_page(request: Request):
+    """Руководство пользователя"""
+    return templates.TemplateResponse("manual_ru.html", {
+        "request": request,
+        "app_name": config.APP_NAME
+    })
+
 @app.post("/api/chat", response_model=ChatResponse)
 async def chat_endpoint(message: ChatMessage):
     """Эндпоинт для чата с GigaChat"""

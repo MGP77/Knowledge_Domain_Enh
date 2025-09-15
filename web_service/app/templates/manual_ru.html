@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Руководство пользователя - GigaChat RAG System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .sber-logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .logo-text {
+            font-size: 28px;
+            font-weight: bold;
+            color: #00B956;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+        }
+
+        .manual-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .manual-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .manual-title {
+            font-size: 2.5rem;
+            color: #2c3e50;
+            margin-bottom: 10px;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+        }
+
+        .manual-subtitle {
+            font-size: 1.2rem;
+            color: #666;
+            margin-bottom: 20px;
+        }
+
+        .toc {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        .toc h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+        }
+
+        .toc ul {
+            list-style: none;
+            columns: 2;
+            column-gap: 30px;
+        }
+
+        .toc li {
+            margin-bottom: 8px;
+            break-inside: avoid;
+        }
+
+        .toc a {
+            color: #3498db;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        .toc a:hover {
+            color: #2980b9;
+        }
+
+        .section {
+            margin-bottom: 40px;
+        }
+
+        .section h2 {
+            color: #2c3e50;
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #3498db;
+        }
+
+        .section h3 {
+            color: #34495e;
+            font-size: 1.4rem;
+            margin-bottom: 15px;
+            margin-top: 25px;
+        }
+
+        .section h4 {
+            color: #555;
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+            margin-top: 20px;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .feature-card {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .feature-card h4 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .emoji {
+            font-size: 1.5rem;
+        }
+
+        .code-block {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            overflow-x: auto;
+            margin: 15px 0;
+        }
+
+        .endpoint {
+            background: #e8f5e8;
+            border-left: 4px solid #27ae60;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .endpoint h5 {
+            color: #27ae60;
+            margin-bottom: 8px;
+            font-size: 1.1rem;
+        }
+
+        .method {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        .method.get { background: #3498db; color: white; }
+        .method.post { background: #e74c3c; color: white; }
+        .method.delete { background: #e67e22; color: white; }
+
+        .warning {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            color: #856404;
+        }
+
+        .info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            color: #0c5460;
+        }
+
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            color: #155724;
+        }
+
+        .nav-buttons {
+            text-align: center;
+            margin: 30px 0;
+        }
+
+        .nav-button {
+            display: inline-block;
+            padding: 12px 24px;
+            background: #3498db;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            margin: 0 10px;
+            font-weight: bold;
+            transition: background 0.3s;
+        }
+
+        .nav-button:hover {
+            background: #2980b9;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background: #3498db;
+            color: white;
+            font-weight: bold;
+        }
+
+        tr:hover {
+            background: #f5f5f5;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .manual-title {
+                font-size: 2rem;
+            }
+            
+            .toc ul {
+                columns: 1;
+            }
+            
+            .feature-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .nav-button {
+                display: block;
+                margin: 10px 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- SberInfra Logo -->
+        <div class="sber-logo">
+            <img src="/static/sber_logo.png" alt="Sber" style="width: 50px; height: auto;">
+            <svg width="60" height="60" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <linearGradient id="sberGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" style="stop-color:#00E676;stop-opacity:1" />
+                        <stop offset="50%" style="stop-color:#00B956;stop-opacity:1" />
+                        <stop offset="100%" style="stop-color:#2E7D32;stop-opacity:1" />
+                    </linearGradient>
+                </defs>
+                <circle cx="50" cy="50" r="45" fill="url(#sberGradient)" stroke="#1B5E20" stroke-width="2"/>
+                <path d="M25 35 Q25 25 35 25 L65 25 Q75 25 75 35 Q75 45 65 45 L45 45 Q35 45 35 55 Q35 65 45 65 L75 65" 
+                      stroke="white" stroke-width="6" fill="none" stroke-linecap="round"/>
+                <circle cx="30" cy="70" r="3" fill="white"/>
+                <circle cx="40" cy="75" r="2" fill="white"/>
+                <circle cx="50" cy="70" r="2.5" fill="white"/>
+                <circle cx="60" cy="75" r="2" fill="white"/>
+                <circle cx="70" cy="70" r="3" fill="white"/>
+            </svg>
+            <div class="logo-text">SberInfra Knowledge Hub</div>
+        </div>
+
+        <div class="manual-card">
+            <div class="manual-header">
+                <h1 class="manual-title">🤖 Руководство пользователя</h1>
+                <p class="manual-subtitle">GigaChat RAG System - Система знаний на базе ИИ</p>
+                <div class="info">
+                    <strong>Версия:</strong> 2.0 | <strong>Дата:</strong> 16 сентября 2025 | <strong>Платформа:</strong> SberInfra
+                </div>
+            </div>
+
+            <!-- Оглавление -->
+            <div class="toc">
+                <h3>📋 Содержание</h3>
+                <ul>
+                    <li><a href="#overview">Обзор системы</a></li>
+                    <li><a href="#getting-started">Быстрый старт</a></li>
+                    <li><a href="#chat">Чат с ИИ</a></li>
+                    <li><a href="#documents">Управление документами</a></li>
+                    <li><a href="#confluence">Интеграция Confluence</a></li>
+                    <li><a href="#admin">Административная панель</a></li>
+                    <li><a href="#maintenance">Обслуживание системы</a></li>
+                    <li><a href="#embeddings">Система embeddings</a></li>
+                    <li><a href="#migration">Миграция данных</a></li>
+                    <li><a href="#api">REST API</a></li>
+                    <li><a href="#troubleshooting">Решение проблем</a></li>
+                    <li><a href="#corporate">Корпоративная среда</a></li>
+                </ul>
+            </div>
+
+            <!-- Обзор системы -->
+            <div class="section" id="overview">
+                <h2>🎯 Обзор системы</h2>
+                
+                <p>GigaChat RAG System - это интеллектуальная система управления знаниями, разработанная для корпоративной среды Сбера. Система сочетает возможности ИИ-чата на базе GigaChat с мощной системой поиска и управления документами.</p>
+
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <h4><span class="emoji">🤖</span> Чат с ИИ</h4>
+                        <p>Интеллектуальные ответы на основе GigaChat с контекстом из базы знаний</p>
+                    </div>
+                    <div class="feature-card">
+                        <h4><span class="emoji">📚</span> База знаний</h4>
+                        <p>ChromaDB с векторным поиском и семантическим анализом</p>
+                    </div>
+                    <div class="feature-card">
+                        <h4><span class="emoji">📄</span> Документы</h4>
+                        <p>Поддержка PDF, DOCX, DOC, TXT с автоматической обработкой</p>
+                    </div>
+                    <div class="feature-card">
+                        <h4><span class="emoji">🔗</span> Confluence</h4>
+                        <p>Импорт страниц и пространств из Confluence</p>
+                    </div>
+                    <div class="feature-card">
+                        <h4><span class="emoji">⚙️</span> Администрирование</h4>
+                        <p>Полный контроль системы с диагностикой и мониторингом</p>
+                    </div>
+                    <div class="feature-card">
+                        <h4><span class="emoji">🔄</span> Автомиграция</h4>
+                        <p>Автоматическая миграция embeddings при смене окружения</p>
+                    </div>
+                </div>
+
+                <div class="success">
+                    <strong>🎉 Новые возможности v2.0:</strong>
+                    <ul>
+                        <li>Автоматическая система миграции embeddings</li>
+                        <li>Улучшенная диагностика корпоративной среды</li>
+                        <li>Расширенная административная панель</li>
+                        <li>Поддержка GigaChat EmbeddingsGigaR (2560 измерений)</li>
+                        <li>Детальная аналитика документов и фрагментов</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Быстрый старт -->
+            <div class="section" id="getting-started">
+                <h2>🚀 Быстрый старт</h2>
+
+                <h3>1. Доступ к системе</h3>
+                <div class="endpoint">
+                    <h5>Основной интерфейс</h5>
+                    <code>http://your-server:8000/</code>
+                </div>
+
+                <div class="endpoint">
+                    <h5>Административная панель</h5>
+                    <code>http://your-server:8000/admin</code>
+                </div>
+
+                <h3>2. Первые шаги</h3>
+                <ol>
+                    <li><strong>Загрузите документы</strong> через интерфейс загрузки</li>
+                    <li><strong>Настройте Confluence</strong> (если используется)</li>
+                    <li><strong>Начните диалог</strong> с ИИ-ассистентом</li>
+                    <li><strong>Проверьте систему</strong> в админ-панели</li>
+                </ol>
+
+                <div class="info">
+                    <strong>💡 Совет:</strong> Начните с загрузки нескольких тестовых документов, чтобы убедиться, что система работает корректно.
+                </div>
+            </div>
+
+            <!-- Чат с ИИ -->
+            <div class="section" id="chat">
+                <h2>💬 Чат с ИИ</h2>
+
+                <h3>Возможности чата</h3>
+                <ul>
+                    <li><strong>Контекстный поиск</strong> - ИИ ищет релевантную информацию в базе знаний</li>
+                    <li><strong>Intelligent ответы</strong> - на основе GigaChat с учетом контекста</li>
+                    <li><strong>Markdown форматирование</strong> - структурированные ответы</li>
+                    <li><strong>Ссылки на источники</strong> - указание документов-источников</li>
+                </ul>
+
+                <h3>Примеры запросов</h3>
+                <div class="code-block">
+• "Как настроить автомасштабирование в Kubernetes?"
+• "Покажи процедуру деплоя приложения"
+• "Какие есть политики безопасности для Docker?"
+• "Расскажи про мониторинг инфраструктуры"
+                </div>
+
+                <h3>Обратная связь</h3>
+                <p>Каждый ответ можно оценить с помощью кнопок 👍/👎 для улучшения качества системы.</p>
+            </div>
+
+            <!-- Управление документами -->
+            <div class="section" id="documents">
+                <h2>📁 Управление документами</h2>
+
+                <h3>Поддерживаемые форматы</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Формат</th>
+                            <th>Расширение</th>
+                            <th>Максимальный размер</th>
+                            <th>Особенности</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>PDF</td>
+                            <td>.pdf</td>
+                            <td>50 MB</td>
+                            <td>Извлечение текста, сохранение структуры</td>
+                        </tr>
+                        <tr>
+                            <td>Word</td>
+                            <td>.docx, .doc</td>
+                            <td>50 MB</td>
+                            <td>Полное форматирование, таблицы</td>
+                        </tr>
+                        <tr>
+                            <td>Текст</td>
+                            <td>.txt</td>
+                            <td>50 MB</td>
+                            <td>Простая обработка, UTF-8</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>Процесс обработки</h3>
+                <ol>
+                    <li><strong>Загрузка</strong> - файл сохраняется в систему</li>
+                    <li><strong>Извлечение текста</strong> - содержимое извлекается из документа</li>
+                    <li><strong>Разбиение на фрагменты</strong> - текст делится на смысловые части</li>
+                    <li><strong>Создание embeddings</strong> - векторное представление через GigaChat</li>
+                    <li><strong>Индексация</strong> - сохранение в ChromaDB для поиска</li>
+                </ol>
+
+                <div class="warning">
+                    <strong>⚠️ Внимание:</strong> При первой загрузке в корпоративной среде может произойти автоматическая миграция embeddings с размерности 384 на 2560. Это нормальный процесс.
+                </div>
+
+                <h3>Статистика документов</h3>
+                <p>В административной панели доступна детальная статистика:</p>
+                <ul>
+                    <li>Количество загруженных документов</li>
+                    <li>Общее количество фрагментов (chunks)</li>
+                    <li>Размер базы данных</li>
+                    <li>Распределение по типам источников</li>
+                </ul>
+            </div>
+
+            <!-- Интеграция Confluence -->
+            <div class="section" id="confluence">
+                <h2>🔗 Интеграция Confluence</h2>
+
+                <h3>Настройка подключения</h3>
+                <ol>
+                    <li>Откройте вкладку "Confluence" в админ-панели</li>
+                    <li>Введите URL вашего Confluence сервера</li>
+                    <li>Укажите логин и API токен</li>
+                    <li>Нажмите "Тест подключения"</li>
+                </ol>
+
+                <h3>Импорт контента</h3>
+                <ul>
+                    <li><strong>По URL страницы</strong> - импорт отдельной страницы</li>
+                    <li><strong>По пространству</strong> - импорт всего пространства</li>
+                    <li><strong>Массовый импорт</strong> - список URL через запятую</li>
+                </ul>
+
+                <div class="info">
+                    <strong>💡 Советы:</strong>
+                    <ul>
+                        <li>Используйте API токены вместо паролей</li>
+                        <li>Проверьте права доступа к пространствам</li>
+                        <li>Импортируйте сначала несколько страниц для теста</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Административная панель -->
+            <div class="section" id="admin">
+                <h2>⚙️ Административная панель</h2>
+
+                <h3>Вкладки системы</h3>
+
+                <h4>📊 Статистика</h4>
+                <ul>
+                    <li>Общая статистика системы</li>
+                    <li>Состояние компонентов</li>
+                    <li>Метрики производительности</li>
+                </ul>
+
+                <h4>🤖 Модели</h4>
+                <ul>
+                    <li>Управление моделями GigaChat</li>
+                    <li>Переключение между GigaChat-2, Pro, Max</li>
+                    <li>Мониторинг использования</li>
+                </ul>
+
+                <h4>📄 Документы</h4>
+                <ul>
+                    <li>Загрузка файлов</li>
+                    <li>Просмотр загруженных документов</li>
+                    <li>Управление контентом</li>
+                </ul>
+
+                <h4>🔗 Confluence</h4>
+                <ul>
+                    <li>Настройка подключения</li>
+                    <li>Тестирование интеграции</li>
+                    <li>Импорт страниц и пространств</li>
+                </ul>
+
+                <h4>💬 Консоль</h4>
+                <ul>
+                    <li>Логи системы в реальном времени</li>
+                    <li>Мониторинг операций</li>
+                    <li>Отладочная информация</li>
+                </ul>
+
+                <h4>🔧 Обслуживание</h4>
+                <ul>
+                    <li>Диагностика системы</li>
+                    <li>Управление embeddings</li>
+                    <li>Миграция данных</li>
+                    <li>Очистка базы данных</li>
+                </ul>
+            </div>
+
+            <!-- Система embeddings -->
+            <div class="section" id="embeddings">
+                <h2>🧠 Система Embeddings</h2>
+
+                <h3>Модели embeddings</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Модель</th>
+                            <th>Размерность</th>
+                            <th>Применение</th>
+                            <th>Среда</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>EmbeddingsGigaR</td>
+                            <td>2560</td>
+                            <td>Корпоративная среда</td>
+                            <td>Production</td>
+                        </tr>
+                        <tr>
+                            <td>Embeddings</td>
+                            <td>384</td>
+                            <td>Базовая модель</td>
+                            <td>Development</td>
+                        </tr>
+                        <tr>
+                            <td>Fallback</td>
+                            <td>384</td>
+                            <td>Резервная система</td>
+                            <td>Development только</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>Проверка совместимости</h3>
+                <div class="endpoint">
+                    <h5><span class="method get">GET</span> Проверка совместимости embeddings</h5>
+                    <code>/api/admin/embedding-compatibility</code>
+                    <p>Проверяет совместимость текущих embeddings с GigaChat</p>
+                </div>
+
+                <div class="info">
+                    <strong>🔍 Диагностика через интерфейс:</strong> Вкладка "Обслуживание" → "⚙️ Совместимость Embeddings"
+                </div>
+            </div>
+
+            <!-- Миграция данных -->
+            <div class="section" id="migration">
+                <h2>🔄 Миграция данных</h2>
+
+                <h3>Автоматическая миграция</h3>
+                <p>Система автоматически обнаруживает несоответствие размерности embeddings и выполняет миграцию:</p>
+                <ol>
+                    <li><strong>Обнаружение</strong> - при загрузке документа система проверяет совместимость</li>
+                    <li><strong>Подготовка</strong> - создается резервная копия метаданных</li>
+                    <li><strong>Миграция</strong> - пересоздание коллекции с новой размерностью</li>
+                    <li><strong>Восстановление</strong> - миграция всех документов</li>
+                    <li><strong>Проверка</strong> - валидация результата</li>
+                </ol>
+
+                <h3>Ручная миграция</h3>
+                <div class="endpoint">
+                    <h5><span class="method post">POST</span> Запуск миграции embeddings</h5>
+                    <code>/api/admin/migrate-embeddings</code>
+                    <p>Принудительный запуск процесса миграции</p>
+                </div>
+
+                <div class="warning">
+                    <strong>⚠️ Внимание:</strong> Ручная миграция удалит все существующие данные и пересоздаст коллекцию. Убедитесь, что у вас есть резервные копии.
+                </div>
+
+                <h3>Мониторинг миграции</h3>
+                <p>Процесс миграции отслеживается через:</p>
+                <ul>
+                    <li>Логи в консоли админ-панели</li>
+                    <li>Статусы в интерфейсе обслуживания</li>
+                    <li>API эндпоинты для проверки прогресса</li>
+                </ul>
+            </div>
+
+            <!-- Обслуживание системы -->
+            <div class="section" id="maintenance">
+                <h2>🔧 Обслуживание системы</h2>
+
+                <h3>Диагностические инструменты</h3>
+
+                <h4>🔍 Полная диагностика</h4>
+                <p>Комплексная проверка всех компонентов системы:</p>
+                <ul>
+                    <li>Состояние ChromaDB</li>
+                    <li>Работоспособность embeddings</li>
+                    <li>Подключение к GigaChat</li>
+                    <li>Статистика документов</li>
+                </ul>
+
+                <h4>🧠 Проверка Embeddings</h4>
+                <p>Тестирование системы векторных представлений:</p>
+                <ul>
+                    <li>Доступность модели</li>
+                    <li>Качество embeddings</li>
+                    <li>Совместимость размерностей</li>
+                </ul>
+
+                <h4>🐛 Отладка GigaChat</h4>
+                <p>Детальная диагностика подключения к GigaChat:</p>
+                <ul>
+                    <li>Проверка сертификатов mTLS</li>
+                    <li>Тестирование API endpoints</li>
+                    <li>Валидация конфигурации</li>
+                </ul>
+
+                <h4>✅ Валидация БД</h4>
+                <p>Проверка целостности базы данных:</p>
+                <ul>
+                    <li>Количество коллекций</li>
+                    <li>Состояние индексов</li>
+                    <li>Размер данных</li>
+                </ul>
+
+                <h3>Экспорт и резервное копирование</h3>
+                <div class="endpoint">
+                    <h5><span class="method get">GET</span> Экспорт метаданных</h5>
+                    <code>/api/admin/export-metadata</code>
+                    <p>Создание резервной копии метаданных системы</p>
+                </div>
+
+                <h3>Очистка системы</h3>
+                <div class="endpoint">
+                    <h5><span class="method delete">DELETE</span> Очистка базы данных</h5>
+                    <code>/api/admin/clear-db</code>
+                    <p>Полная очистка всех документов и embeddings</p>
+                </div>
+
+                <div class="warning">
+                    <strong>⚠️ Осторожно:</strong> Операция очистки необратима. Всегда создавайте резервные копии перед очисткой.
+                </div>
+            </div>
+
+            <!-- REST API -->
+            <div class="section" id="api">
+                <h2>🔌 REST API</h2>
+
+                <h3>Основные эндпоинты</h3>
+
+                <div class="endpoint">
+                    <h5><span class="method post">POST</span> Чат с ИИ</h5>
+                    <code>/api/chat</code>
+                    <p>Отправка сообщения ИИ-ассистенту</p>
+                </div>
+
+                <div class="endpoint">
+                    <h5><span class="method post">POST</span> Загрузка документа</h5>
+                    <code>/api/upload</code>
+                    <p>Загрузка файла в систему</p>
+                </div>
+
+                <div class="endpoint">
+                    <h5><span class="method get">GET</span> Статистика</h5>
+                    <code>/api/admin/stats</code>
+                    <p>Получение статистики системы</p>
+                </div>
+
+                <h3>Административные эндпоинты</h3>
+
+                <div class="endpoint">
+                    <h5><span class="method post">POST</span> Диагностика системы</h5>
+                    <code>/api/admin/diagnostics</code>
+                    <p>Комплексная диагностика</p>
+                </div>
+
+                <div class="endpoint">
+                    <h5><span class="method get">GET</span> Проверка embeddings</h5>
+                    <code>/api/admin/embedding-health</code>
+                    <p>Состояние системы embeddings</p>
+                </div>
+
+                <div class="endpoint">
+                    <h5><span class="method get">GET</span> Отладка GigaChat</h5>
+                    <code>/api/admin/gigachat-debug</code>
+                    <p>Подробная диагностика GigaChat</p>
+                </div>
+
+                <div class="endpoint">
+                    <h5><span class="method get">GET</span> Анализ фрагментов</h5>
+                    <code>/api/admin/chunk-analysis</code>
+                    <p>Анализ распределения документов</p>
+                </div>
+
+                <h3>Confluence API</h3>
+
+                <div class="endpoint">
+                    <h5><span class="method post">POST</span> Тест подключения</h5>
+                    <code>/api/confluence/test</code>
+                    <p>Проверка подключения к Confluence</p>
+                </div>
+
+                <div class="endpoint">
+                    <h5><span class="method post">POST</span> Парсинг контента</h5>
+                    <code>/api/confluence/parse</code>
+                    <p>Импорт страниц из Confluence</p>
+                </div>
+
+                <h3>Пример использования API</h3>
+                <div class="code-block">
+# Отправка сообщения в чат
+curl -X POST "http://localhost:8000/api/chat" \
+  -H "Content-Type: application/json" \
+  -d '{"message": "Как настроить Kubernetes?"}'
+
+# Загрузка файла
+curl -X POST "http://localhost:8000/api/upload" \
+  -F "file=@document.pdf"
+
+# Получение статистики
+curl "http://localhost:8000/api/admin/stats"
+                </div>
+            </div>
+
+            <!-- Решение проблем -->
+            <div class="section" id="troubleshooting">
+                <h2>🔧 Решение проблем</h2>
+
+                <h3>Частые проблемы</h3>
+
+                <h4>❌ "Клиент не инициализирован"</h4>
+                <p><strong>Причина:</strong> Проблема с сертификатами mTLS или конфигурацией GigaChat</p>
+                <p><strong>Решение:</strong></p>
+                <ol>
+                    <li>Проверьте наличие файлов сертификатов</li>
+                    <li>Убедитесь, что сертификаты не являются заглушками</li>
+                    <li>Запустите диагностику через админ-панель</li>
+                    <li>Проверьте сетевое подключение к GigaChat</li>
+                </ol>
+
+                <h4>❌ "Collection expecting embedding with dimension of 384, got 2560"</h4>
+                <p><strong>Причина:</strong> Несоответствие размерности embeddings между средами</p>
+                <p><strong>Решение:</strong> Система автоматически выполнит миграцию при следующей загрузке документа</p>
+
+                <h4>❌ "RAG сервис недоступен"</h4>
+                <p><strong>Причина:</strong> Проблемы с ChromaDB или системой embeddings</p>
+                <p><strong>Решение:</strong></p>
+                <ol>
+                    <li>Проверьте состояние ChromaDB</li>
+                    <li>Запустите валидацию базы данных</li>
+                    <li>Проверьте доступность GigaChat embeddings</li>
+                </ol>
+
+                <h3>Диагностические команды</h3>
+                <div class="code-block">
+# Проверка состояния системы
+curl http://localhost:8000/health
+
+# Диагностика GigaChat
+curl http://localhost:8000/api/admin/gigachat-debug
+
+# Проверка совместимости embeddings
+curl http://localhost:8000/api/admin/embedding-compatibility
+
+# Валидация базы данных
+curl http://localhost:8000/api/admin/validate-db
+                </div>
+
+                <h3>Логи и мониторинг</h3>
+                <p>Для отладки проблем используйте:</p>
+                <ul>
+                    <li><strong>Консоль в админ-панели</strong> - логи в реальном времени</li>
+                    <li><strong>Вкладка "Обслуживание"</strong> - комплексная диагностика</li>
+                    <li><strong>API эндпоинты</strong> - программная проверка состояния</li>
+                </ul>
+            </div>
+
+            <!-- Корпоративная среда -->
+            <div class="section" id="corporate">
+                <h2>🏢 Корпоративная среда</h2>
+
+                <h3>Особенности развертывания</h3>
+                <ul>
+                    <li><strong>mTLS аутентификация</strong> - обязательные клиентские сертификаты</li>
+                    <li><strong>GigaChat EmbeddingsGigaR</strong> - корпоративная модель с размерностью 2560</li>
+                    <li><strong>Отключенные fallback</strong> - только корпоративные компоненты</li>
+                    <li><strong>Автоматическая миграция</strong> - адаптация при смене среды</li>
+                </ul>
+
+                <h3>Настройка сертификатов</h3>
+                <p>Для работы в корпоративной среде необходимо:</p>
+                <ol>
+                    <li>Получить mTLS сертификаты от службы безопасности</li>
+                    <li>Поместить файлы в директорию <code>certificates/</code></li>
+                    <li>Убедиться в правильности путей в конфигурации</li>
+                    <li>Проверить подключение через диагностику</li>
+                </ol>
+
+                <h3>Конфигурация</h3>
+                <div class="code-block">
+# Корпоративные настройки
+GIGACHAT_BASE_URL=https://gigachat-ift.sberdevices.delta.sbrf.ru/v1
+GIGACHAT_EMBEDDING_MODEL=EmbeddingsGigaR
+MTLS_CLIENT_CERT=../certificates/cert.pem
+MTLS_CLIENT_KEY=../certificates/key.pem
+MTLS_VERIFY_SSL=false
+                </div>
+
+                <h3>Миграция между средами</h3>
+                <p>При переводе системы из тестовой среды в корпоративную:</p>
+                <ol>
+                    <li>Система автоматически определит изменение размерности</li>
+                    <li>Выполнит миграцию с 384 на 2560 измерений</li>
+                    <li>Пересохранит все документы с новыми embeddings</li>
+                    <li>Продолжит работу в корпоративном режиме</li>
+                </ol>
+
+                <div class="success">
+                    <strong>✅ Готовность к корпоративной среде:</strong> Система полностью адаптирована для работы в корпоративной инфраструктуре Сбера с автоматической адаптацией конфигурации.
+                </div>
+            </div>
+
+            <!-- Навигация -->
+            <div class="nav-buttons">
+                <a href="/" class="nav-button">🏠 Главная страница</a>
+                <a href="/admin" class="nav-button">⚙️ Админ-панель</a>
+                <a href="/health" class="nav-button">💚 Статус системы</a>
+            </div>
+
+            <!-- Футер -->
+            <div style="text-align: center; margin-top: 40px; padding: 20px; background: #f8f9fa; border-radius: 10px;">
+                <p><strong>GigaChat RAG System v2.0</strong></p>
+                <p>© 2025 SberInfra Knowledge Hub | Powered by GigaChat & ChromaDB</p>
+                <p style="font-size: 0.9rem; color: #666;">
+                    Для технической поддержки обращайтесь к администратору системы
+                </p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
