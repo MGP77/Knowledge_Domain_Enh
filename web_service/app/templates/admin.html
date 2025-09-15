@@ -499,6 +499,7 @@
     <button class="tab-button" onclick="switchTab('files')">📁 Файлы</button>
     <button class="tab-button" onclick="switchTab('models')">🤖 Модели</button>
     <button class="tab-button" onclick="switchTab('database')">🗄️ База данных</button>
+    <button class="tab-button" onclick="switchTab('maintenance')">🔧 Диагностика</button>
     <button class="tab-button" onclick="switchTab('console')">🖥️ Консоль</button>
 </div>
 
@@ -701,6 +702,80 @@ https://company.atlassian.net/wiki/pages/viewpage.action?pageId=789012"></textar
                         onclick="return confirm('Вы уверены? Это действие нельзя отменить!')">
                     🗑️ Очистить базу данных
                 </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="maintenanceTab" class="tab-content">
+    <div class="admin-card">
+        <h3>🔧 Диагностика и обслуживание</h3>
+        
+        <div class="form-section">
+            <h4>Состояние системы</h4>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-number" id="systemStatus">🔄</div>
+                    <div class="stat-label">Статус RAG</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" id="embeddingStatus">🔄</div>
+                    <div class="stat-label">Embedding Provider</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" id="chromaStatus">🔄</div>
+                    <div class="stat-label">ChromaDB</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" id="dbSize">0 MB</div>
+                    <div class="stat-label">Размер БД</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h4>Диагностические действия</h4>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px;">
+                <button class="btn btn-primary" onclick="runSystemDiagnostics()">
+                    🔍 Полная диагностика
+                </button>
+                <button class="btn btn-secondary" onclick="checkEmbeddingHealth()">
+                    🧠 Проверить Embeddings
+                </button>
+                <button class="btn btn-secondary" onclick="validateDatabase()">
+                    ✅ Валидация БД
+                </button>
+                <button class="btn btn-warning" onclick="checkMaintenanceNeeds()">
+                    🔧 Потребности обслуживания
+                </button>
+            </div>
+            
+            <div id="diagnosticsResult" class="alert" style="display: none;">
+                <h5>📋 Результаты диагностики:</h5>
+                <div id="diagnosticsContent"></div>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h4>Управление данными</h4>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <button class="btn btn-info" onclick="exportDatabaseInfo()">
+                    📤 Экспорт метаданных
+                </button>
+                <button class="btn btn-secondary" onclick="viewDocumentSources()">
+                    📑 Источники документов
+                </button>
+                <button class="btn btn-secondary" onclick="analyzeChunkDistribution()">
+                    📊 Анализ фрагментов
+                </button>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h4>Рекомендации по обслуживанию</h4>
+            <div id="maintenanceRecommendations" class="model-description">
+                <h5>🔄 Загрузка рекомендаций...</h5>
+                <p>Анализируем состояние системы...</p>
             </div>
         </div>
     </div>
@@ -1232,7 +1307,301 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
-// Обновленная функция переключения вкладок с поддержкой консоли и моделей
+// =============================================================================
+// ДИАГНОСТИКА И ОБСЛУЖИВАНИЕ
+// =============================================================================
+
+// Запуск полной диагностики системы
+async function runSystemDiagnostics() {
+    const resultDiv = document.getElementById('diagnosticsResult');
+    const contentDiv = document.getElementById('diagnosticsContent');
+    
+    resultDiv.style.display = 'block';
+    resultDiv.className = 'alert alert-warning';
+    contentDiv.innerHTML = '🔄 Запуск диагностики...';
+
+    try {
+        const response = await fetch('/api/admin/diagnostics', {
+            method: 'POST'
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            resultDiv.className = 'alert alert-success';
+            contentDiv.innerHTML = formatDiagnosticsResult(result.data);
+            updateMaintenanceStatus(result.data);
+        } else {
+            resultDiv.className = 'alert alert-error';
+            contentDiv.innerHTML = `❌ ${result.message}`;
+        }
+    } catch (error) {
+        resultDiv.className = 'alert alert-error';
+        contentDiv.innerHTML = `❌ Ошибка диагностики: ${error.message}`;
+    }
+}
+
+// Проверка здоровья embedding провайдера
+async function checkEmbeddingHealth() {
+    const resultDiv = document.getElementById('diagnosticsResult');
+    const contentDiv = document.getElementById('diagnosticsContent');
+    
+    resultDiv.style.display = 'block';
+    resultDiv.className = 'alert alert-warning';
+    contentDiv.innerHTML = '🧠 Проверка embedding провайдера...';
+
+    try {
+        const response = await fetch('/api/admin/embedding-health');
+        const result = await response.json();
+
+        if (result.success) {
+            resultDiv.className = 'alert alert-success';
+            contentDiv.innerHTML = `
+                ✅ <strong>Embedding провайдер работает</strong><br>
+                📊 Модель: ${result.data.model}<br>
+                ⚡ Время ответа: ${result.data.response_time}мс<br>
+                🔢 Размерность векторов: ${result.data.vector_dimensions}
+            `;
+            document.getElementById('embeddingStatus').textContent = '✅';
+        } else {
+            resultDiv.className = 'alert alert-error';
+            contentDiv.innerHTML = `❌ ${result.message}`;
+            document.getElementById('embeddingStatus').textContent = '❌';
+        }
+    } catch (error) {
+        resultDiv.className = 'alert alert-error';
+        contentDiv.innerHTML = `❌ Ошибка: ${error.message}`;
+        document.getElementById('embeddingStatus').textContent = '❌';
+    }
+}
+
+// Валидация базы данных
+async function validateDatabase() {
+    const resultDiv = document.getElementById('diagnosticsResult');
+    const contentDiv = document.getElementById('diagnosticsContent');
+    
+    resultDiv.style.display = 'block';
+    resultDiv.className = 'alert alert-warning';
+    contentDiv.innerHTML = '✅ Валидация базы данных...';
+
+    try {
+        const response = await fetch('/api/admin/validate-db');
+        const result = await response.json();
+
+        if (result.success) {
+            resultDiv.className = 'alert alert-success';
+            contentDiv.innerHTML = `
+                ✅ <strong>База данных валидна</strong><br>
+                📊 Коллекций: ${result.data.collections_count}<br>
+                📝 Документов: ${result.data.documents_count}<br>
+                🔧 Состояние индексов: ${result.data.index_status}<br>
+                💾 Размер: ${result.data.size_mb} MB
+            `;
+            document.getElementById('chromaStatus').textContent = '✅';
+            document.getElementById('dbSize').textContent = `${result.data.size_mb} MB`;
+        } else {
+            resultDiv.className = 'alert alert-error';
+            contentDiv.innerHTML = `❌ ${result.message}`;
+            document.getElementById('chromaStatus').textContent = '❌';
+        }
+    } catch (error) {
+        resultDiv.className = 'alert alert-error';
+        contentDiv.innerHTML = `❌ Ошибка: ${error.message}`;
+        document.getElementById('chromaStatus').textContent = '❌';
+    }
+}
+
+// Проверка потребностей обслуживания
+async function checkMaintenanceNeeds() {
+    try {
+        const response = await fetch('/api/admin/maintenance-check');
+        const result = await response.json();
+
+        const recommendationsDiv = document.getElementById('maintenanceRecommendations');
+        
+        if (result.success) {
+            const data = result.data;
+            let statusColor = data.reindexing_needed ? '#f39c12' : '#27ae60';
+            
+            recommendationsDiv.innerHTML = `
+                <h5 style="color: ${statusColor};">
+                    ${data.reindexing_needed ? '⚠️' : '✅'} 
+                    Состояние обслуживания
+                </h5>
+                <p><strong>Автоматическая оптимизация:</strong> ${data.automatic_optimization ? '✅ Включена' : '❌ Отключена'}</p>
+                <p><strong>Тип обслуживания:</strong> ${data.maintenance_type}</p>
+                <p><strong>Ре-индексация:</strong> ${data.reindexing_needed ? '⚠️ Требуется' : '✅ Не требуется'}</p>
+                ${data.recommendations ? `<p><strong>Рекомендации:</strong> ${data.recommendations}</p>` : ''}
+            `;
+        } else {
+            recommendationsDiv.innerHTML = `
+                <h5 style="color: #e74c3c;">❌ Ошибка проверки</h5>
+                <p>${result.message}</p>
+            `;
+        }
+    } catch (error) {
+        const recommendationsDiv = document.getElementById('maintenanceRecommendations');
+        recommendationsDiv.innerHTML = `
+            <h5 style="color: #e74c3c;">❌ Ошибка</h5>
+            <p>Не удалось проверить потребности обслуживания: ${error.message}</p>
+        `;
+    }
+}
+
+// Экспорт метаданных базы данных
+async function exportDatabaseInfo() {
+    try {
+        const response = await fetch('/api/admin/export-metadata');
+        const result = await response.json();
+
+        if (result.success) {
+            // Создаем и скачиваем файл
+            const dataStr = JSON.stringify(result.data, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            
+            const link = document.createElement('a');
+            link.href = window.URL.createObjectURL(dataBlob);
+            link.download = `database_metadata_${new Date().toISOString().split('T')[0]}.json`;
+            link.click();
+            
+            showAlert('Метаданные экспортированы', 'success');
+        } else {
+            showAlert(`Ошибка экспорта: ${result.message}`, 'error');
+        }
+    } catch (error) {
+        showAlert(`Ошибка экспорта: ${error.message}`, 'error');
+    }
+}
+
+// Просмотр источников документов
+async function viewDocumentSources() {
+    const resultDiv = document.getElementById('diagnosticsResult');
+    const contentDiv = document.getElementById('diagnosticsContent');
+    
+    resultDiv.style.display = 'block';
+    resultDiv.className = 'alert alert-warning';
+    contentDiv.innerHTML = '📑 Загрузка источников документов...';
+
+    try {
+        const response = await fetch('/api/admin/document-sources');
+        const result = await response.json();
+
+        if (result.success) {
+            resultDiv.className = 'alert alert-success';
+            const sources = result.data.sources;
+            
+            let sourcesHtml = '<strong>📑 Источники документов:</strong><br><br>';
+            sources.forEach(source => {
+                sourcesHtml += `
+                    📄 <strong>${source.source_type}</strong>: ${source.count} документов<br>
+                    ${source.details ? `&nbsp;&nbsp;&nbsp;&nbsp;${source.details}<br>` : ''}
+                `;
+            });
+            
+            contentDiv.innerHTML = sourcesHtml;
+        } else {
+            resultDiv.className = 'alert alert-error';
+            contentDiv.innerHTML = `❌ ${result.message}`;
+        }
+    } catch (error) {
+        resultDiv.className = 'alert alert-error';
+        contentDiv.innerHTML = `❌ Ошибка: ${error.message}`;
+    }
+}
+
+// Анализ распределения фрагментов
+async function analyzeChunkDistribution() {
+    const resultDiv = document.getElementById('diagnosticsResult');
+    const contentDiv = document.getElementById('diagnosticsContent');
+    
+    resultDiv.style.display = 'block';
+    resultDiv.className = 'alert alert-warning';
+    contentDiv.innerHTML = '📊 Анализ распределения фрагментов...';
+
+    try {
+        const response = await fetch('/api/admin/chunk-analysis');
+        const result = await response.json();
+
+        if (result.success) {
+            resultDiv.className = 'alert alert-success';
+            const analysis = result.data;
+            
+            contentDiv.innerHTML = `
+                <strong>📊 Анализ фрагментов:</strong><br><br>
+                📝 Общее количество: ${analysis.total_chunks}<br>
+                📏 Средний размер: ${analysis.avg_chunk_size} символов<br>
+                📐 Размер от ${analysis.min_chunk_size} до ${analysis.max_chunk_size} символов<br>
+                📚 Источников: ${analysis.unique_sources}<br>
+                ${analysis.distribution ? `<br><strong>Распределение по источникам:</strong><br>${analysis.distribution}` : ''}
+            `;
+        } else {
+            resultDiv.className = 'alert alert-error';
+            contentDiv.innerHTML = `❌ ${result.message}`;
+        }
+    } catch (error) {
+        resultDiv.className = 'alert alert-error';
+        contentDiv.innerHTML = `❌ Ошибка: ${error.message}`;
+    }
+}
+
+// Форматирование результатов диагностики
+function formatDiagnosticsResult(data) {
+    let html = '<strong>📋 Результаты полной диагностики:</strong><br><br>';
+    
+    if (data.chromadb) {
+        html += `🗄️ <strong>ChromaDB:</strong> ${data.chromadb.status}<br>`;
+        if (data.chromadb.size_mb) {
+            html += `&nbsp;&nbsp;&nbsp;&nbsp;💾 Размер: ${data.chromadb.size_mb} MB<br>`;
+        }
+    }
+    
+    if (data.embedding) {
+        html += `🧠 <strong>Embeddings:</strong> ${data.embedding.status}<br>`;
+        if (data.embedding.model) {
+            html += `&nbsp;&nbsp;&nbsp;&nbsp;🤖 Модель: ${data.embedding.model}<br>`;
+        }
+    }
+    
+    if (data.documents) {
+        html += `📚 <strong>Документы:</strong> ${data.documents.total} шт.<br>`;
+        html += `📝 <strong>Фрагменты:</strong> ${data.documents.chunks} шт.<br>`;
+    }
+    
+    if (data.recommendations && data.recommendations.length > 0) {
+        html += '<br><strong>💡 Рекомендации:</strong><br>';
+        data.recommendations.forEach(rec => {
+            html += `&nbsp;&nbsp;&nbsp;&nbsp;• ${rec}<br>`;
+        });
+    }
+    
+    return html;
+}
+
+// Обновление статуса обслуживания
+function updateMaintenanceStatus(data) {
+    if (data.chromadb && data.chromadb.status === 'OK') {
+        document.getElementById('chromaStatus').textContent = '✅';
+    } else {
+        document.getElementById('chromaStatus').textContent = '❌';
+    }
+    
+    if (data.embedding && data.embedding.status === 'OK') {
+        document.getElementById('embeddingStatus').textContent = '✅';
+    } else {
+        document.getElementById('embeddingStatus').textContent = '❌';
+    }
+    
+    // Общий статус системы
+    const allOk = data.chromadb?.status === 'OK' && data.embedding?.status === 'OK';
+    document.getElementById('systemStatus').textContent = allOk ? '✅' : '⚠️';
+    
+    // Размер БД
+    if (data.chromadb?.size_mb) {
+        document.getElementById('dbSize').textContent = `${data.chromadb.size_mb} MB`;
+    }
+}
+
+// Обновленная функция переключения вкладок с поддержкой maintenance
 function switchTab(tabName) {
     // Скрываем все вкладки
     document.querySelectorAll('.tab-content').forEach(tab => {
@@ -1253,6 +1622,12 @@ function switchTab(tabName) {
         connectConsoleWebSocket();
     } else if (tabName === 'models') {
         loadModels();
+    } else if (tabName === 'maintenance') {
+        // Автоматически запускаем проверку состояния при открытии вкладки
+        setTimeout(() => {
+            checkMaintenanceNeeds();
+            validateDatabase();
+        }, 500);
     }
 }
 

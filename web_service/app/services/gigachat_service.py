@@ -203,3 +203,37 @@ class GigaChatService:
             return "Недоступно"
         
         return config.DEFAULT_GIGACHAT_MODEL
+
+    def test_embeddings(self, text: str) -> Dict[str, Any]:
+        """Тестирование embedding провайдера"""
+        try:
+            if not self.client:
+                return {"success": False, "error": "Клиент не инициализирован"}
+            
+            # Тестовый запрос к embedding API
+            data = {
+                "model": config.GIGACHAT_EMBEDDING_MODEL,
+                "input": [text]
+            }
+            
+            response = self._make_request("embeddings", data)
+            
+            if response and "data" in response and len(response["data"]) > 0:
+                embedding = response["data"][0]["embedding"]
+                return {
+                    "success": True,
+                    "embedding": embedding,
+                    "model": config.GIGACHAT_EMBEDDING_MODEL
+                }
+            else:
+                return {
+                    "success": False,
+                    "error": "Некорректный ответ от API"
+                }
+                
+        except Exception as e:
+            logger.error(f"Ошибка тестирования embeddings: {e}")
+            return {
+                "success": False,
+                "error": str(e)
+            }

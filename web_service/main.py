@@ -428,6 +428,268 @@ async def clear_database():
         logger.error(f"Ошибка очистки базы данных: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+# =============================================================================
+# MAINTENANCE AND DIAGNOSTICS API ENDPOINTS
+# =============================================================================
+
+@app.post("/api/admin/diagnostics")
+async def run_diagnostics():
+    """Полная диагностика системы"""
+    try:
+        # Проверяем ChromaDB
+        chromadb_status = "OK" if rag_service.check_availability() else "ERROR"
+        chromadb_info = {"status": chromadb_status}
+        
+        # Получаем размер базы данных
+        try:
+            import os
+            db_path = config.CHROMA_DB_PATH
+            if os.path.exists(db_path):
+                size_bytes = sum(os.path.getsize(os.path.join(dirpath, filename))
+                               for dirpath, dirnames, filenames in os.walk(db_path)
+                               for filename in filenames)
+                chromadb_info["size_mb"] = round(size_bytes / (1024 * 1024), 2)
+            else:
+                chromadb_info["size_mb"] = 0.0
+        except Exception:
+            chromadb_info["size_mb"] = 0.0
+        
+        # Проверяем embedding сервис
+        embedding_status = "OK" if gigachat_service.check_availability() else "ERROR"
+        embedding_info = {
+            "status": embedding_status,
+            "model": config.GIGACHAT_EMBEDDING_MODEL if embedding_status == "OK" else "Недоступно"
+        }
+        
+        # Получаем статистику документов
+        stats = rag_service.get_statistics()
+        documents_info = {
+            "total": stats.get("total_documents", 0),
+            "chunks": stats.get("total_chunks", 0)
+        }
+        
+        # Формируем рекомендации
+        recommendations = []
+        if chromadb_status != "OK":
+            recommendations.append("Проверьте доступность ChromaDB")
+        if embedding_status != "OK":
+            recommendations.append("Проверьте настройки GigaChat Embeddings")
+        if chromadb_info.get("size_mb", 0) > 500:
+            recommendations.append("Рассмотрите создание резервной копии базы данных")
+        if documents_info["total"] == 0:
+            recommendations.append("Загрузите документы в систему")
+        
+        return {
+            "success": True,
+            "data": {
+                "chromadb": chromadb_info,
+                "embedding": embedding_info,
+                "documents": documents_info,
+                "recommendations": recommendations
+            }
+        }
+        
+    except Exception as e:
+        logger.error(f"Ошибка диагностики: {e}")
+        return {"success": False, "message": f"Ошибка диагностики: {str(e)}"}
+
+@app.get("/api/admin/embedding-health")
+async def check_embedding_health():
+    """Проверка здоровья embedding провайдера"""
+    try:
+        start_time = datetime.now()
+        
+        # Тестируем embedding
+        test_result = gigachat_service.test_embeddings("Тестовый запрос для проверки")
+        
+        end_time = datetime.now()
+        response_time = int((end_time - start_time).total_seconds() * 1000)
+        
+        if test_result.get("success", False):
+            vector_dimensions = len(test_result.get("embedding", []))
+            
+            return {
+                "success": True,
+                "data": {
+                    "model": config.GIGACHAT_EMBEDDING_MODEL,
+                    "response_time": response_time,
+                    "vector_dimensions": vector_dimensions,
+                    "status": "healthy"
+                }
+            }
+        else:
+            return {
+                "success": False,
+                "message": "Embedding провайдер недоступен или возвращает ошибки"
+            }
+        
+    except Exception as e:
+        logger.error(f"Ошибка проверки embedding: {e}")
+        return {"success": False, "message": f"Ошибка: {str(e)}"}
+
+@app.get("/api/admin/validate-db")
+async def validate_database():
+    """Валидация базы данных ChromaDB"""
+    try:
+        if not rag_service.check_availability():
+            return {"success": False, "message": "ChromaDB недоступна"}
+        
+        # Получаем статистику
+        stats = rag_service.get_statistics()
+        
+        # Проверяем размер базы данных
+        import os
+        db_path = config.CHROMA_DB_PATH
+        size_mb = 0.0
+        if os.path.exists(db_path):
+            size_bytes = sum(os.path.getsize(os.path.join(dirpath, filename))
+                           for dirpath, dirnames, filenames in os.walk(db_path)
+                           for filename in filenames)
+            size_mb = round(size_bytes / (1024 * 1024), 2)
+        
+        # Проверяем коллекции
+        collections_count = 1  # У нас одна коллекция по умолчанию
+        
+        return {
+            "success": True,
+            "data": {
+                "collections_count": collections_count,
+                "documents_count": stats.get("total_documents", 0),
+                "index_status": "Автоматический (HNSW)",
+                "size_mb": size_mb,
+                "chunks_count": stats.get("total_chunks", 0)
+            }
+        }
+        
+    except Exception as e:
+        logger.error(f"Ошибка валидации БД: {e}")
+        return {"success": False, "message": f"Ошибка валидации: {str(e)}"}
+
+@app.get("/api/admin/maintenance-check")
+async def check_maintenance_needs():
+    """Проверка потребностей обслуживания"""
+    try:
+        # Простая проверка без импорта внешнего модуля
+        # ChromaDB автоматически управляет индексами
+        
+        # Проверяем размер базы
+        import os
+        db_path = config.CHROMA_DB_PATH
+        size_mb = 0.0
+        if os.path.exists(db_path):
+            size_bytes = sum(os.path.getsize(os.path.join(dirpath, filename))
+                           for dirpath, dirnames, filenames in os.walk(db_path)
+                           for filename in filenames)
+            size_mb = round(size_bytes / (1024 * 1024), 2)
+        
+        # Формируем результат
+        result = {
+            "reindexing_needed": False,
+            "automatic_optimization": True,
+            "maintenance_type": "monitoring_only",
+            "recommendations": "ChromaDB автоматически управляет индексами. Ре-индексация не требуется.",
+            "database_size_mb": size_mb
+        }
+        
+        if size_mb > 500:
+            result["recommendations"] += " База данных большая - рекомендуется создание резервных копий."
+        
+        return {"success": True, "data": result}
+        
+    except Exception as e:
+        logger.error(f"Ошибка проверки обслуживания: {e}")
+        return {"success": False, "message": f"Ошибка: {str(e)}"}
+
+@app.get("/api/admin/export-metadata")
+async def export_database_metadata():
+    """Экспорт метаданных базы данных"""
+    try:
+        if not rag_service.check_availability():
+            return {"success": False, "message": "RAG сервис недоступен"}
+        
+        # Получаем статистику
+        stats = rag_service.get_statistics()
+        
+        # Формируем метаданные
+        metadata = {
+            "export_date": datetime.now().isoformat(),
+            "database_stats": stats,
+            "configuration": {
+                "chunk_size": config.CHUNK_SIZE,
+                "chunk_overlap": config.CHUNK_OVERLAP,
+                "embedding_model": config.GIGACHAT_EMBEDDING_MODEL,
+                "max_search_results": config.MAX_SEARCH_RESULTS
+            },
+            "system_info": {
+                "app_version": config.APP_VERSION,
+                "db_path": config.CHROMA_DB_PATH
+            }
+        }
+        
+        return {"success": True, "data": metadata}
+        
+    except Exception as e:
+        logger.error(f"Ошибка экспорта метаданных: {e}")
+        return {"success": False, "message": f"Ошибка экспорта: {str(e)}"}
+
+@app.get("/api/admin/document-sources")
+async def get_document_sources():
+    """Получение информации об источниках документов"""
+    try:
+        if not rag_service.check_availability():
+            return {"success": False, "message": "RAG сервис недоступен"}
+        
+        # Получаем статистику по источникам
+        sources_info = rag_service.get_sources_statistics()
+        
+        # Формируем ответ
+        sources = []
+        
+        confluence_count = sources_info.get("confluence_pages", 0)
+        if confluence_count > 0:
+            sources.append({
+                "source_type": "Confluence",
+                "count": confluence_count,
+                "details": f"Страницы из различных пространств"
+            })
+        
+        uploaded_count = sources_info.get("uploaded_files", 0)
+        if uploaded_count > 0:
+            sources.append({
+                "source_type": "Загруженные файлы",
+                "count": uploaded_count,
+                "details": f"PDF, DOCX, TXT файлы"
+            })
+        
+        if not sources:
+            sources.append({
+                "source_type": "Нет источников",
+                "count": 0,
+                "details": "Документы не загружены"
+            })
+        
+        return {"success": True, "data": {"sources": sources}}
+        
+    except Exception as e:
+        logger.error(f"Ошибка получения источников: {e}")
+        return {"success": False, "message": f"Ошибка: {str(e)}"}
+
+@app.get("/api/admin/chunk-analysis")
+async def analyze_chunk_distribution():
+    """Анализ распределения фрагментов"""
+    try:
+        if not rag_service.check_availability():
+            return {"success": False, "message": "RAG сервис недоступен"}
+        
+        # Получаем анализ фрагментов
+        analysis = rag_service.analyze_chunks()
+        
+        return {"success": True, "data": analysis}
+        
+    except Exception as e:
+        logger.error(f"Ошибка анализа фрагментов: {e}")
+        return {"success": False, "message": f"Ошибка анализа: {str(e)}"}
+
 @app.websocket("/ws/logs")
 async def websocket_logs(websocket: WebSocket):
     """WebSocket endpoint для получения логов в реальном времени"""
