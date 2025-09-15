@@ -216,24 +216,70 @@ class GigaChatService:
                 "input": [text]
             }
             
-            response = self._make_request("embeddings", data)
+            url = f"{self.base_url}/embeddings"
             
-            if response and "data" in response and len(response["data"]) > 0:
-                embedding = response["data"][0]["embedding"]
-                return {
-                    "success": True,
-                    "embedding": embedding,
-                    "model": config.GIGACHAT_EMBEDDING_MODEL
-                }
-            else:
+            # Выполняем запрос с подробным логированием
+            try:
+                response = requests.post(
+                    url,
+                    json=data,
+                    cert=(self.cert_path, self.key_path),
+                    verify=self.verify_ssl,
+                    timeout=60,
+                    headers={
+                        "Content-Type": "application/json",
+                        "Accept": "application/json"
+                    }
+                )
+                
+                if response.status_code == 200:
+                    response_data = response.json()
+                    if "data" in response_data and len(response_data["data"]) > 0:
+                        embedding = response_data["data"][0]["embedding"]
+                        return {
+                            "success": True,
+                            "embedding": embedding,
+                            "model": config.GIGACHAT_EMBEDDING_MODEL,
+                            "status_code": response.status_code
+                        }
+                    else:
+                        return {
+                            "success": False,
+                            "error": f"Некорректный формат ответа: {response_data}",
+                            "status_code": response.status_code
+                        }
+                else:
+                    error_text = response.text
+                    return {
+                        "success": False,
+                        "error": f"HTTP {response.status_code}: {error_text}",
+                        "status_code": response.status_code
+                    }
+                    
+            except requests.exceptions.SSLError as e:
                 return {
                     "success": False,
-                    "error": "Некорректный ответ от API"
+                    "error": f"SSL ошибка: {str(e)}"
+                }
+            except requests.exceptions.ConnectionError as e:
+                return {
+                    "success": False,
+                    "error": f"Ошибка соединения: {str(e)}"
+                }
+            except requests.exceptions.Timeout as e:
+                return {
+                    "success": False,
+                    "error": f"Тайм-аут запроса: {str(e)}"
+                }
+            except Exception as e:
+                return {
+                    "success": False,
+                    "error": f"Неожиданная ошибка запроса: {str(e)}"
                 }
                 
         except Exception as e:
             logger.error(f"Ошибка тестирования embeddings: {e}")
             return {
                 "success": False,
-                "error": str(e)
+                "error": f"Общая ошибка: {str(e)}"
             }

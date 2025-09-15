@@ -459,11 +459,22 @@ async def run_diagnostics():
         except Exception:
             chromadb_info["size_mb"] = 0.0
         
-        # Проверяем embedding сервис
-        embedding_status = "OK" if gigachat_service.check_availability() else "ERROR"
+        # Проверяем embedding сервис  
+        embedding_basic_check = gigachat_service.check_availability()
+        embedding_test_result = gigachat_service.test_embeddings("Тестовый запрос")
+        
+        if embedding_test_result.get("success", False):
+            embedding_status = "OK"
+            embedding_error = None
+        else:
+            embedding_status = "ERROR"
+            embedding_error = embedding_test_result.get("error", "Неизвестная ошибка")
+        
         embedding_info = {
             "status": embedding_status,
-            "model": config.GIGACHAT_EMBEDDING_MODEL if embedding_status == "OK" else "Недоступно"
+            "model": config.GIGACHAT_EMBEDDING_MODEL,
+            "basic_available": embedding_basic_check,
+            "error": embedding_error
         }
         
         # Получаем статистику документов
@@ -478,8 +489,13 @@ async def run_diagnostics():
         if chromadb_status != "OK":
             recommendations.append("Проверьте доступность ChromaDB")
         if embedding_status != "OK":
-            recommendations.append("Проверьте настройки GigaChat Embeddings")
-        if chromadb_info.get("size_mb", 0) > 500:
+            if embedding_error:
+                recommendations.append(f"Проверьте настройки GigaChat Embeddings: {embedding_error}")
+            else:
+                recommendations.append("Проверьте настройки GigaChat Embeddings")
+        
+        db_size = chromadb_info.get("size_mb", 0.0)
+        if isinstance(db_size, (int, float)) and db_size > 500:
             recommendations.append("Рассмотрите создание резервной копии базы данных")
         if documents_info["total"] == 0:
             recommendations.append("Загрузите документы в систему")
@@ -504,6 +520,9 @@ async def check_embedding_health():
     try:
         start_time = datetime.now()
         
+        # Проверяем базовую доступность
+        basic_available = gigachat_service.check_availability()
+        
         # Тестируем embedding
         test_result = gigachat_service.test_embeddings("Тестовый запрос для проверки")
         
@@ -519,18 +538,68 @@ async def check_embedding_health():
                     "model": config.GIGACHAT_EMBEDDING_MODEL,
                     "response_time": response_time,
                     "vector_dimensions": vector_dimensions,
-                    "status": "healthy"
+                    "status": "healthy",
+                    "basic_available": basic_available
                 }
             }
         else:
+            error_details = test_result.get("error", "Неизвестная ошибка")
             return {
                 "success": False,
-                "message": "Embedding провайдер недоступен или возвращает ошибки"
+                "message": f"Embedding провайдер недоступен: {error_details}",
+                "data": {
+                    "basic_available": basic_available,
+                    "response_time": response_time,
+                    "error": error_details,
+                    "model": config.GIGACHAT_EMBEDDING_MODEL
+                }
             }
         
     except Exception as e:
         logger.error(f"Ошибка проверки embedding: {e}")
         return {"success": False, "message": f"Ошибка: {str(e)}"}
+
+@app.get("/api/admin/gigachat-debug")
+async def debug_gigachat():
+    """Подробная диагностика GigaChat для отладки"""
+    try:
+        debug_info = {
+            "client_initialized": gigachat_service.client is not None,
+            "mtls_cert_path": config.MTLS_CLIENT_CERT,
+            "mtls_key_path": config.MTLS_CLIENT_KEY,
+            "embedding_model": config.GIGACHAT_EMBEDDING_MODEL,
+            "base_url": config.GIGACHAT_BASE_URL,
+            "mtls_verify_ssl": config.MTLS_VERIFY_SSL
+        }
+        
+        # Проверяем сертификаты
+        import os
+        cert_path = config.MTLS_CLIENT_CERT
+        key_path = config.MTLS_CLIENT_KEY
+        
+        debug_info["cert_file_exists"] = os.path.exists(cert_path)
+        debug_info["key_file_exists"] = os.path.exists(key_path)
+        
+        if debug_info["cert_file_exists"]:
+            debug_info["cert_file_size"] = os.path.getsize(cert_path)
+        if debug_info["key_file_exists"]:
+            debug_info["key_file_size"] = os.path.getsize(key_path)
+        
+        # Тестируем базовую доступность
+        debug_info["basic_availability"] = gigachat_service.check_availability()
+        
+        # Тестируем embedding с подробностями
+        if debug_info["basic_availability"]:
+            test_result = gigachat_service.test_embeddings("Тест")
+            debug_info["embedding_test"] = test_result
+        else:
+            debug_info["embedding_test"] = {"success": False, "error": "Базовая проверка не прошла"}
+        
+        return {"success": True, "debug_info": debug_info}
+        
+    except Exception as e:
+        logger.error(f"Ошибка отладки GigaChat: {e}")
+        return {"success": False, "message": f"Ошибка отладки: {str(e)}"}
 
 @app.get("/api/admin/validate-db")
 async def validate_database():
@@ -694,6 +763,35 @@ async def analyze_chunk_distribution():
     except Exception as e:
         logger.error(f"Ошибка анализа фрагментов: {e}")
         return {"success": False, "message": f"Ошибка анализа: {str(e)}"}
+
+@app.get("/api/admin/embedding-compatibility")
+async def check_embedding_compatibility():
+    """Проверка совместимости размерности эмбеддингов"""
+    try:
+        compatibility = rag_service.check_embedding_dimension_compatibility()
+        return {"success": True, "data": compatibility}
+    except Exception as e:
+        logger.error(f"Ошибка проверки совместимости эмбеддингов: {e}")
+        return {"success": False, "message": f"Ошибка: {str(e)}"}
+
+@app.post("/api/admin/migrate-embeddings")
+async def migrate_embeddings(force: bool = False):
+    """Миграция эмбеддингов при изменении размерности"""
+    try:
+        logger.info(f"🔄 Запрос миграции эмбеддингов (force={force})")
+        
+        migration_result = rag_service.migrate_embedding_dimensions(force=force)
+        
+        if migration_result.get("success"):
+            logger.info("✅ Миграция эмбеддингов завершена успешно")
+        else:
+            logger.warning(f"⚠️ Миграция не выполнена: {migration_result.get('message')}")
+        
+        return {"success": True, "data": migration_result}
+        
+    except Exception as e:
+        logger.error(f"Ошибка миграции эмбеддингов: {e}")
+        return {"success": False, "message": f"Ошибка миграции: {str(e)}"}
 
 @app.websocket("/ws/logs")
 async def websocket_logs(websocket: WebSocket):

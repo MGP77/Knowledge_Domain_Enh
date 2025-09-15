@@ -742,8 +742,17 @@ https://company.atlassian.net/wiki/pages/viewpage.action?pageId=789012"></textar
                 <button class="btn btn-secondary" onclick="checkEmbeddingHealth()">
                     🧠 Проверить Embeddings
                 </button>
+                <button class="btn btn-secondary" onclick="debugGigaChat()">
+                    🐛 Отладка GigaChat
+                </button>
                 <button class="btn btn-secondary" onclick="validateDatabase()">
                     ✅ Валидация БД
+                </button>
+                <button class="btn btn-warning" onclick="checkEmbeddingCompatibility()">
+                    ⚙️ Совместимость Embeddings
+                </button>
+                <button class="btn btn-danger" onclick="migrateEmbeddings()">
+                    🔄 Мигрировать Embeddings
                 </button>
                 <button class="btn btn-warning" onclick="checkMaintenanceNeeds()">
                     🔧 Потребности обслуживания
@@ -1375,6 +1384,54 @@ async function checkEmbeddingHealth() {
     }
 }
 
+// Отладка GigaChat
+async function debugGigaChat() {
+    const resultDiv = document.getElementById('diagnosticsResult');
+    const contentDiv = document.getElementById('diagnosticsContent');
+    
+    resultDiv.style.display = 'block';
+    resultDiv.className = 'alert alert-warning';
+    contentDiv.innerHTML = '🐛 Отладка GigaChat...';
+
+    try {
+        const response = await fetch('/api/admin/gigachat-debug');
+        const result = await response.json();
+
+        if (result.success) {
+            const debug = result.debug_info;
+            resultDiv.className = 'alert alert-info';
+            contentDiv.innerHTML = `
+                <h5>🐛 Детальная информация GigaChat:</h5>
+                <strong>Базовые параметры:</strong><br>
+                🔗 URL: ${debug.base_url}<br>
+                🤖 Модель: ${debug.embedding_model}<br>
+                ✅ Клиент инициализирован: ${debug.client_initialized ? 'Да' : 'Нет'}<br>
+                🔒 Проверка SSL: ${debug.mtls_verify_ssl ? 'Включена' : 'Отключена'}<br><br>
+                
+                <strong>Сертификаты:</strong><br>
+                📄 Путь к сертификату: ${debug.mtls_cert_path}<br>
+                🔑 Путь к ключу: ${debug.mtls_key_path}<br>
+                ✅ Файл сертификата существует: ${debug.cert_file_exists ? 'Да' : 'Нет'}<br>
+                ✅ Файл ключа существует: ${debug.key_file_exists ? 'Да' : 'Нет'}<br>
+                ${debug.cert_file_size ? `📏 Размер сертификата: ${debug.cert_file_size} байт<br>` : ''}
+                ${debug.key_file_size ? `📏 Размер ключа: ${debug.key_file_size} байт<br>` : ''}<br>
+                
+                <strong>Тестирование:</strong><br>
+                🔧 Базовая доступность: ${debug.basic_availability ? 'OK' : 'FAIL'}<br>
+                🧠 Тест embedding: ${debug.embedding_test.success ? 'OK' : 'FAIL'}<br>
+                ${debug.embedding_test.error ? `❌ Ошибка embedding: ${debug.embedding_test.error}<br>` : ''}
+                ${debug.embedding_test.status_code ? `📡 HTTP код: ${debug.embedding_test.status_code}<br>` : ''}
+            `;
+        } else {
+            resultDiv.className = 'alert alert-error';
+            contentDiv.innerHTML = `❌ Ошибка отладки: ${result.message}`;
+        }
+    } catch (error) {
+        resultDiv.className = 'alert alert-error';
+        contentDiv.innerHTML = `❌ Ошибка: ${error.message}`;
+    }
+}
+
 // Валидация базы данных
 async function validateDatabase() {
     const resultDiv = document.getElementById('diagnosticsResult');
@@ -1537,6 +1594,95 @@ async function analyzeChunkDistribution() {
         } else {
             resultDiv.className = 'alert alert-error';
             contentDiv.innerHTML = `❌ ${result.message}`;
+        }
+    } catch (error) {
+        resultDiv.className = 'alert alert-error';
+        contentDiv.innerHTML = `❌ Ошибка: ${error.message}`;
+    }
+}
+
+// Проверка совместимости embeddings
+async function checkEmbeddingCompatibility() {
+    const resultDiv = document.getElementById('diagnosticsResult');
+    const contentDiv = document.getElementById('diagnosticsContent');
+    
+    resultDiv.style.display = 'block';
+    resultDiv.className = 'alert alert-warning';
+    contentDiv.innerHTML = '⚙️ Проверка совместимости embeddings...';
+
+    try {
+        const response = await fetch('/api/admin/embedding-compatibility');
+        const result = await response.json();
+
+        if (result.success) {
+            const compat = result.data;
+            let statusClass = 'alert-success';
+            let statusIcon = '✅';
+            
+            if (!compat.compatible) {
+                statusClass = 'alert-warning';
+                statusIcon = '⚠️';
+            }
+            
+            resultDiv.className = `alert ${statusClass}`;
+            contentDiv.innerHTML = `
+                <strong>${statusIcon} Совместимость Embeddings:</strong><br><br>
+                🧠 Текущая модель: ${compat.current_model}<br>
+                📐 Размерность текущей: ${compat.current_dimension}<br>
+                🎯 Размерность GigaChat: ${compat.gigachat_dimension}<br>
+                ✅ Совместимость: ${compat.compatible ? 'Да' : 'Нет'}<br>
+                📊 Документов в БД: ${compat.documents_count}<br>
+                ${!compat.compatible ? `<br><strong>⚠️ Требуется миграция!</strong><br>` : ''}
+                ${compat.migration_needed ? `🔄 Будет выполнена автоматическая миграция при следующей загрузке документа<br>` : ''}
+            `;
+        } else {
+            resultDiv.className = 'alert alert-error';
+            contentDiv.innerHTML = `❌ ${result.message}`;
+        }
+    } catch (error) {
+        resultDiv.className = 'alert alert-error';
+        contentDiv.innerHTML = `❌ Ошибка: ${error.message}`;
+    }
+}
+
+// Миграция embeddings
+async function migrateEmbeddings() {
+    if (!confirm('⚠️ Внимание! Миграция удалит все существующие данные и пересоздаст коллекцию с новой размерностью. Продолжить?')) {
+        return;
+    }
+    
+    const resultDiv = document.getElementById('diagnosticsResult');
+    const contentDiv = document.getElementById('diagnosticsContent');
+    
+    resultDiv.style.display = 'block';
+    resultDiv.className = 'alert alert-warning';
+    contentDiv.innerHTML = '🔄 Выполняется миграция embeddings...<br>⏳ Это может занять некоторое время...';
+
+    try {
+        const response = await fetch('/api/admin/migrate-embeddings', {
+            method: 'POST'
+        });
+        const result = await response.json();
+
+        if (result.success) {
+            resultDiv.className = 'alert alert-success';
+            contentDiv.innerHTML = `
+                <strong>✅ Миграция завершена успешно!</strong><br><br>
+                🔄 Старая размерность: ${result.data.old_dimension}<br>
+                🎯 Новая размерность: ${result.data.new_dimension}<br>
+                📊 Обработано документов: ${result.data.migrated_documents}<br>
+                ⏱️ Время выполнения: ${result.data.duration}с<br>
+                <br><strong>🎉 Система готова к работе с GigaChat!</strong>
+            `;
+            
+            // Обновляем статус
+            setTimeout(() => {
+                checkEmbeddingHealth();
+                validateDatabase();
+            }, 1000);
+        } else {
+            resultDiv.className = 'alert alert-error';
+            contentDiv.innerHTML = `❌ Ошибка миграции: ${result.message}`;
         }
     } catch (error) {
         resultDiv.className = 'alert alert-error';

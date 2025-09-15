@@ -1,0 +1,31 @@
+nohup: ignoring input
+2025-09-15 23:50:32,902 - app.services.gigachat_service - WARNING - ⚠️ Обнаружен файл-заглушка ключа
+2025-09-15 23:50:32,944 - app.services.rag_service - WARNING - ⚠️ GigaChat эмбеддинги недоступны - используем fallback провайдер
+2025-09-15 23:50:32,944 - app.services.rag_service - INFO - 🔧 Используем простые эмбеддинги (fallback)
+2025-09-15 23:50:32,944 - app.services.rag_service - INFO - ✅ RAG сервис успешно инициализирован
+2025-09-15 23:50:32,962 - app.services.rag_service - INFO - 📊 Документов в базе: 9
+2025-09-15 23:50:32,962 - app.services.rag_service - INFO - 🔧 Провайдер эмбеддингов: SimpleEmbeddingsProvider
+2025-09-15 23:50:32,962 - app.services.confluence_service - INFO - ✅ Найдены системные сертификаты: /etc/ssl/certs/ca-certificates.crt
+/home/parallels/Projects/Knowledge_Domain_Enh/web_service/main.py:113: DeprecationWarning: 
+        on_event is deprecated, use lifespan event handlers instead.
+
+        Read more about it in the
+        [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+        
+  @app.on_event("startup")
+2025-09-15 23:50:32,978 - app.services.gigachat_service - WARNING - ⚠️ Обнаружен файл-заглушка ключа
+2025-09-15 23:50:32,982 - app.services.rag_service - WARNING - ⚠️ GigaChat эмбеддинги недоступны - используем fallback провайдер
+2025-09-15 23:50:32,982 - app.services.rag_service - INFO - 🔧 Используем простые эмбеддинги (fallback)
+2025-09-15 23:50:32,982 - app.services.rag_service - INFO - ✅ RAG сервис успешно инициализирован
+2025-09-15 23:50:32,982 - app.services.rag_service - INFO - 📊 Документов в базе: 9
+2025-09-15 23:50:32,982 - app.services.rag_service - INFO - 🔧 Провайдер эмбеддингов: SimpleEmbeddingsProvider
+2025-09-15 23:50:32,982 - app.services.confluence_service - INFO - ✅ Найдены системные сертификаты: /etc/ssl/certs/ca-certificates.crt
+INFO:     Started server process [39576]
+INFO:     Waiting for application startup.
+2025-09-15 23:50:32,986 - main - INFO - 🚀 Запуск web-сервиса...
+2025-09-15 23:50:32,986 - main - INFO - 📊 GigaChat доступен: False
+2025-09-15 23:50:32,986 - main - INFO - 📊 RAG сервис доступен: True
+INFO:     Application startup complete.
+ERROR:    [Errno 98] error while attempting to bind on address ('0.0.0.0', 8005): address already in use
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.

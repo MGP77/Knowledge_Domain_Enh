@@ -272,6 +272,21 @@ class RAGService:
             return {"success": False, "chunks_added": 0, "error": "RAG сервис недоступен"}
         
         try:
+            # Проверяем совместимость размерности эмбеддингов
+            compatibility = self.check_embedding_dimension_compatibility()
+            if not compatibility.get("compatible") and compatibility.get("existing_dimension"):
+                logger.warning("⚠️ Обнаружено несоответствие размерности эмбеддингов")
+                
+                # Автоматическая миграция при первом несоответствии
+                migration_result = self.migrate_embedding_dimensions(force=True)
+                if not migration_result.get("success"):
+                    return {
+                        "success": False, 
+                        "chunks_added": 0, 
+                        "error": f"Ошибка миграции эмбеддингов: {migration_result.get('message')}"
+                    }
+                logger.info("✅ Автоматическая миграция эмбеддингов завершена")
+            
             # Разбиваем текст на чанки
             chunks = self.text_splitter.split_text(content)
             
@@ -531,3 +546,135 @@ class RAGService:
                 "unique_sources": 0,
                 "error": str(e)
             }
+
+    def check_embedding_dimension_compatibility(self) -> Dict[str, Any]:
+        """Проверка совместимости размерности эмбеддингов"""
+        try:
+            if not self.check_availability() or not self.collection or not self.embedding_provider:
+                return {"compatible": False, "error": "RAG сервис недоступен"}
+            
+            # Проверяем, есть ли документы в коллекции
+            collection_count = self.collection.count()
+            if collection_count == 0:
+                return {"compatible": True, "reason": "Коллекция пуста"}
+            
+            # Получаем размерность текущего провайдера
+            test_embedding = self.embedding_provider.get_embeddings(["тест"])
+            if not test_embedding:
+                return {"compatible": False, "error": "Не удалось получить тестовый эмбеддинг"}
+            
+            current_dimension = len(test_embedding[0])
+            
+            # Получаем размерность существующих эмбеддингов
+            try:
+                results = self.collection.peek(limit=1)
+                if results and 'embeddings' in results:
+                    embeddings = results['embeddings']
+                    if len(embeddings) > 0:
+                        existing_embedding = embeddings[0]
+                        if existing_embedding is not None:
+                            existing_dimension = len(existing_embedding)
+                            
+                            compatible = current_dimension == existing_dimension
+                            return {
+                                "compatible": compatible,
+                                "current_dimension": current_dimension,
+                                "existing_dimension": existing_dimension,
+                                "collection_count": collection_count,
+                                "provider_type": type(self.embedding_provider).__name__
+                            }
+                    
+            except Exception as e:
+                logger.error(f"Ошибка получения существующих эмбеддингов: {e}")
+            
+            return {"compatible": False, "error": "Не удалось определить размерность существующих эмбеддингов"}
+            
+        except Exception as e:
+            logger.error(f"Ошибка проверки совместимости эмбеддингов: {e}")
+            return {"compatible": False, "error": str(e)}
+
+    def migrate_embedding_dimensions(self, force: bool = False) -> Dict[str, Any]:
+        """Миграция эмбеддингов при смене размерности"""
+        try:
+            if not self.check_availability() or not self.collection or not self.embedding_provider or not self.client:
+                return {"success": False, "error": "RAG сервис недоступен для миграции"}
+                
+            compatibility = self.check_embedding_dimension_compatibility()
+            
+            if compatibility.get("compatible"):
+                return {"success": True, "message": "Миграция не требуется", "details": compatibility}
+            
+            if not force:
+                return {
+                    "success": False, 
+                    "message": "Обнаружено несоответствие размерности эмбеддингов. Используйте force=True для пересоздания коллекции",
+                    "details": compatibility
+                }
+            
+            logger.warning("⚠️ Начинаем миграцию эмбеддингов...")
+            
+            # Получаем все документы
+            all_documents = self.collection.get(include=['documents', 'metadatas'])
+            
+            if not all_documents or not all_documents.get('documents'):
+                return {"success": False, "message": "Нет документов для миграции"}
+            
+            documents = all_documents['documents']
+            metadatas = all_documents['metadatas']
+            document_count = len(documents)
+            
+            logger.info(f"🔄 Найдено {document_count} документов для миграции")
+            
+            # Пересоздаем коллекцию
+            try:
+                self.client.delete_collection(config.CHROMA_COLLECTION_NAME)
+                logger.info("🗑️ Старая коллекция удалена")
+            except Exception as e:
+                logger.warning(f"Предупреждение при удалении коллекции: {e}")
+            
+            # Создаем новую коллекцию
+            self.collection = self.client.create_collection(
+                name=config.CHROMA_COLLECTION_NAME,
+                metadata={"hnsw:space": "cosine"}
+            )
+            logger.info("✅ Новая коллекция создана")
+            
+            # Мигрируем документы по одному
+            migrated_count = 0
+            for i, (document, metadata) in enumerate(zip(documents, metadatas)):
+                try:
+                    # Получаем новый эмбеддинг
+                    new_embedding = self.embedding_provider.get_embeddings([document])
+                    if new_embedding:
+                        # Генерируем новый ID
+                        new_id = str(uuid.uuid4())
+                        
+                        self.collection.add(
+                            documents=[document],
+                            metadatas=[metadata],
+                            ids=[new_id],
+                            embeddings=new_embedding
+                        )
+                        migrated_count += 1
+                        
+                        if (i + 1) % 5 == 0:
+                            logger.info(f"🔄 Мигрировано {i + 1}/{document_count} документов")
+                    
+                except Exception as e:
+                    logger.error(f"Ошибка миграции документа {i}: {e}")
+                    continue
+            
+            logger.info(f"✅ Миграция завершена: {migrated_count}/{document_count} документов")
+            
+            return {
+                "success": True,
+                "message": f"Миграция завершена успешно",
+                "migrated_documents": migrated_count,
+                "total_documents": document_count,
+                "new_dimension": compatibility.get("current_dimension"),
+                "old_dimension": compatibility.get("existing_dimension")
+            }
+            
+        except Exception as e:
+            logger.error(f"Ошибка миграции эмбеддингов: {e}")
+            return {"success": False, "message": f"Ошибка миграции: {str(e)}"}
