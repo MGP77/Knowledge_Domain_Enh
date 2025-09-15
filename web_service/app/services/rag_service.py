@@ -265,11 +265,11 @@ class RAGService:
         """Проверка доступности RAG сервиса"""
         return self.is_available and self.collection is not None and self.embedding_provider is not None
     
-    def add_document(self, content: str, metadata: Dict[str, Any]) -> bool:
-        """Добавление документа в RAG базу"""
+    def add_document(self, content: str, metadata: Dict[str, Any]) -> Dict[str, Any]:
+        """Добавление документа в RAG базу с возвратом информации о чанках"""
         if not self.check_availability():
             logger.error("RAG сервис недоступен")
-            return False
+            return {"success": False, "chunks_added": 0, "error": "RAG сервис недоступен"}
         
         try:
             # Разбиваем текст на чанки
@@ -277,18 +277,18 @@ class RAGService:
             
             if not chunks:
                 logger.warning("Не удалось разбить текст на чанки")
-                return False
+                return {"success": False, "chunks_added": 0, "error": "Не удалось разбить текст на чанки"}
             
             # Получаем эмбеддинги для всех чанков
             chunk_texts = [chunk for chunk in chunks if chunk.strip()]
             if not chunk_texts:
                 logger.warning("Нет валидных чанков")
-                return False
+                return {"success": False, "chunks_added": 0, "error": "Нет валидных чанков"}
             
             embeddings = self.embedding_provider.get_embeddings(chunk_texts)
             if not embeddings or len(embeddings) != len(chunk_texts):
                 logger.error("Не удалось получить эмбеддинги для всех чанков")
-                return False
+                return {"success": False, "chunks_added": 0, "error": "Не удалось получить эмбеддинги"}
             
             # Подготавливаем данные для добавления
             documents = []
@@ -322,11 +322,11 @@ class RAGService:
             )
             
             logger.info(f"✅ Добавлено {len(documents)} чанков из документа '{metadata.get('title', 'Без названия')}'")
-            return True
+            return {"success": True, "chunks_added": len(documents)}
             
         except Exception as e:
             logger.error(f"Ошибка добавления документа: {e}")
-            return False
+            return {"success": False, "chunks_added": 0, "error": str(e)}
     
     def search(self, query: str, n_results: Optional[int] = None) -> List[Dict[str, Any]]:
         """Поиск по RAG базе"""
@@ -397,7 +397,7 @@ class RAGService:
                     # Для Confluence учитываем page_id
                     page_id = metadata.get('page_id', 'unknown')
                     confluence_pages.add(page_id)
-                elif source == 'file':
+                elif source in ['file', 'file_upload']:  # Поддерживаем оба варианта
                     # Для файлов учитываем filename
                     filename = metadata.get('filename', 'unknown')
                     uploaded_files.add(filename)

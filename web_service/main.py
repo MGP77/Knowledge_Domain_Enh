@@ -239,6 +239,7 @@ async def parse_confluence(request: ConfluenceParseRequest):
         
         # Добавляем в RAG базу
         processed_count = 0
+        chunks_added = 0
         for page in pages:
             if page['content']:
                 metadata = {
@@ -253,14 +254,16 @@ async def parse_confluence(request: ConfluenceParseRequest):
                     'last_modified': page['last_modified']
                 }
                 
-                if rag_service.add_document(page['content'], metadata):
+                add_result = rag_service.add_document(page['content'], metadata)
+                if add_result["success"]:
                     processed_count += 1
+                    chunks_added += add_result["chunks_added"]
         
-        logger.info(f"✅ Обработано {processed_count} страниц Confluence")
+        logger.info(f"✅ Обработано {processed_count} страниц Confluence ({chunks_added} чанков)")
         
         return {
             "success": True,
-            "message": f"Успешно обработано {processed_count} страниц",
+            "message": f"Успешно обработано {processed_count} страниц ({chunks_added} чанков)",
             "processed_pages": processed_count,
             "total_found": len(pages)
         }
@@ -313,26 +316,28 @@ async def upload_file(file: UploadFile = File(...)):
             )
         
         # Добавляем в RAG базу
-        success = rag_service.add_document(
+        add_result = rag_service.add_document(
             processing_result['content'],
             processing_result['metadata']
         )
         
-        if success:
-            logger.info(f"✅ Файл {file.filename} успешно добавлен в базу знаний")
+        if add_result["success"]:
+            logger.info(f"✅ Файл {file.filename} успешно добавлен в базу знаний ({add_result['chunks_added']} чанков)")
             return DocumentUploadResponse(
                 filename=file.filename,
                 size=len(file_content),
                 status="success",
-                message="Файл успешно обработан и добавлен в базу знаний",
-                processed_chunks=1  # TODO: получить реальное количество чанков
+                message=f"Файл успешно обработан и добавлен в базу знаний ({add_result['chunks_added']} чанков)",
+                processed_chunks=add_result["chunks_added"]
             )
         else:
+            error_msg = add_result.get("error", "Неизвестная ошибка")
             return DocumentUploadResponse(
                 filename=file.filename,
                 size=len(file_content),
                 status="error",
-                message="Ошибка добавления в базу знаний. Проверьте настройки GigaChat."
+                message=f"Ошибка добавления в базу знаний: {error_msg}",
+                processed_chunks=0
             )
         
     except Exception as e:

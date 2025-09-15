@@ -284,7 +284,7 @@ class FileProcessorService:
             
             # Подготавливаем метаданные
             metadata = {
-                'source': 'file_upload',
+                'source': 'file',  # Стандартизировано для совместимости со статистикой
                 'filename': file_name,
                 'file_type': file_extension,
                 'file_size': validation['file_size'],
